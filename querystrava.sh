@@ -93,23 +93,41 @@ qs_build_segment_board() {
 	echo "
 	   <html>
 	   <head>
-		<style>table, th, td { border: 1px solid black; }</style>
+		<style>
+			table, th, td { border: 1px solid black; }
+			th { cursor:pointer; }
+		</style>
+		<link href=\"https://www.w3schools.com/w3css/4/w3.css\" rel=\"stylesheet\" />
+		<script src=\"https://www.w3schools.com/lib/w3.js\"></script>
+		<script type=\"text/javascript\">
+			function findColumnIndex(heading) {
+				if (!heading.previousElementSibling) {
+					return 1;
+				}
+
+				return 1 + findColumnIndex(heading.previousElementSibling);
+			}
+
+			function sortTable(heading) {
+				w3.sortHTML('table','tbody>tr', 'td:nth-child(' + findColumnIndex(heading) + ')')
+			}
+		</script>
 	   </head>
 	   <body>
-		<table>
+		<table class=\"w3-table-all\">
 		 <thead>
 		  <tr>
-		   <th>ID</th>
-		   <th>Name</th>
-		   <th>Rank</th>
-		   <th>PR Time (s)</th>
-		   <th>CR Time (s)</th>
-		   <th>Delta (s)</th>
-		   <th>Distance (m)</th>
-		   <th>Average Grade (%)</th>
-		   <th>Maximum Grade (%)</th>
-		   <th>Minimum Elevation (m)</th>
-		   <th>Maximum Elevation (m)</th>
+		   <th onclick=\"sortTable(this)\">ID</th>
+		   <th onclick=\"sortTable(this)\">Name</th>
+		   <th onclick=\"sortTable(this)\">Rank</th>
+		   <th onclick=\"sortTable(this)\">PR Time (s)</th>
+		   <th onclick=\"sortTable(this)\">CR Time (s)</th>
+		   <th onclick=\"sortTable(this)\">Delta (s)</th>
+		   <th onclick=\"sortTable(this)\">Distance (m)</th>
+		   <th onclick=\"sortTable(this)\">Average Grade (%)</th>
+		   <th onclick=\"sortTable(this)\">Maximum Grade (%)</th>
+		   <th onclick=\"sortTable(this)\">Minimum Elevation (m)</th>
+		   <th onclick=\"sortTable(this)\">Maximum Elevation (m)</th>
 		   <!-- th>Athlete PR</th -->
 		 </thead>
 		 <tbody>
