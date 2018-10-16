@@ -34,10 +34,13 @@ Retrieve from https://www.strava.com/settings/api
 Client ID: <prompts for client ID>
 Client secret: <prompts for client secret>
 
-Login here: https://www.strava.com/oauth/authorize?client_id=<client ID>&redirect_uri=http://localhost/&response_type=code&scope=view_private
+Authorize the application here: https://www.strava.com/oauth/authorize?client_id=<client ID>redirect_uri=http://localhost:8080/site/&response_type=code&scope=read_all,activity:read_all,profile:read_all
 Code (from callback URL): <prompts for code>
 
-Auth token set as ad45ffd8d0368dc90ef751c20130f8b26fce3777
+Auth token: 3a81d6f3aa3a9eee6fabfa666e99608280db534a
+Refresh token: daaa2a3bc5d5cc5535f041284a4791e5ae38916f
+Token expires: Tue 16 Oct 2018 00:47:30 PDT
+
 
 # If you need to re-authenticate, the client ID and secret will be saved, since those shouldn't change
 #  If you do need to change the client ID and secret, provide them as arguments to qs_auth

@@ -8,6 +8,8 @@ mkdir ~/.querystrava &> /dev/null
 # QS_CLIENT_ID
 # QS_CLIENT_SECRET
 # QS_AUTH_TOKEN
+# QS_REFRESH_TOKEN
+# QS_AUTH_TOKEN_EXPIRY
 
 
 ### HELPERS
@@ -34,19 +36,33 @@ qs_auth() {
 		echo
 	fi
 
-	echo "Login here: https://www.strava.com/oauth/authorize?client_id=${QS_CLIENT_ID}&redirect_uri=http://localhost/&response_type=code&scope=view_private"
+	echo "Authorize the application here: https://www.strava.com/oauth/authorize?client_id=${QS_CLIENT_ID}&redirect_uri=http://localhost:8080/site/&response_type=code&scope=read_all,activity:read_all,profile:read_all"
 
 	local QS_AUTH_CODE
 	read -p 'Code (from callback URL): ' QS_AUTH_CODE
 	echo
 
-	qs_set_auth_token $(http POST "https://www.strava.com/oauth/token?client_id=${QS_CLIENT_ID}&client_secret=${QS_CLIENT_SECRET}&code=${QS_AUTH_CODE}" | jq -r '.access_token')
+	http POST "https://www.strava.com/oauth/token?client_id=${QS_CLIENT_ID}&client_secret=${QS_CLIENT_SECRET}&code=${QS_AUTH_CODE}&grant_type=authorization_code" \
+	 | qs_parse_auth_response
+
+	echo "Auth token: ${QS_AUTH_TOKEN}"
+	echo "Refresh token: ${QS_REFRESH_TOKEN}"
+	echo "Token expires: $(date -r ${QS_AUTH_TOKEN_EXPIRY})"
 }
 
-qs_set_auth_token() {
-	QS_AUTH_TOKEN=${1:-$QS_AUTH_TOKEN}
+qs_touch_auth() {
+	if [[ `date +%s` -gt $[$QS_AUTH_TOKEN_EXPIRY - 3600] ]]; then
+		http POST "https://www.strava.com/oauth/token?client_id=${QS_CLIENT_ID}&client_secret=${QS_CLIENT_SECRET}&refresh_token=${QS_REFRESH_TOKEN}&grant_type=refresh_token" \
+		 | qs_parse_auth_response
+	fi
+}
 
-	echo "Auth token set as ${QS_AUTH_TOKEN}"
+qs_parse_auth_response() {
+	local QS_AUTH_RESPONSE=$(jq '.')
+
+	QS_AUTH_TOKEN=$(echo ${QS_AUTH_RESPONSE} | jq -r '.access_token')
+	QS_REFRESH_TOKEN=$(echo ${QS_AUTH_RESPONSE} | jq -r '.refresh_token')
+	QS_AUTH_TOKEN_EXPIRY=$(echo ${QS_AUTH_RESPONSE} | jq -r '.expires_at')
 }
 
 
@@ -56,6 +72,7 @@ qs_query_strava() {
 	local QS_QUERY_METHOD=${2:-GET} # default GET
 	local QS_QUERY_BASE_URL='https://www.strava.com/api/v3'
 
+	qs_touch_auth
 	local QS_RESPONSE=$(http ${QS_QUERY_METHOD} "${QS_QUERY_BASE_URL}${QS_QUERY_URI}" "Authorization:Bearer ${QS_AUTH_TOKEN}")
 	echo $QS_RESPONSE  | jq '.'
 }
