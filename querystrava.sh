@@ -120,9 +120,9 @@ qs_build_segment_board() {
 		   <th>ID</th>
 		   <th>Name</th>
 		   <th>Rank</th>
-		   <th>PR Time (s)</th>
-		   <th>CR Time (s)</th>
-		   <th>Delta (s)</th>
+		   <th>CR Time (MM:SS)</th>
+		   <th>PR Time (MM:SS)</th>
+		   <th>Delta (MM:SS)</th>
 		   <th>Distance (m)</th>
 		   <th>Average Grade (%)</th>
 		   <th>Maximum Grade (%)</th>
@@ -153,9 +153,9 @@ qs_build_segment_board() {
 			   <td><a href='${QS_SEGMENT_URL}'>${segmentId}</a></td>
 			   <td><a href='${QS_SEGMENT_URL}'>$(echo $QS_SEGMENT | jq -r '.[].name')</a></td>
 			   <td>${QS_SEGMENT_ATHLETE_RANK} / ${QS_SEGMENT_ENTRIES}</td>
-			   <td>${QS_SEGMENT_PR}</td>
-			   <td>${QS_SEGMENT_CR}</td>
-			   <td>${QS_SEGMENT_CR_DELTA}</td>
+			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_CR)</td>
+			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_PR)</td>
+			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_CR_DELTA)</td>
 			   <td>$(echo $QS_SEGMENT | jq '.[].distance')</td>
 			   <td>$(echo $QS_SEGMENT | jq '.[].average_grade')</td>
 			   <td>$(echo $QS_SEGMENT | jq '.[].maximum_grade')</td>
@@ -173,4 +173,10 @@ qs_build_segment_board() {
 	" >> ~/.querystrava/segments.html
 
 	open ~/.querystrava/segments.html
+}
+
+qs_seconds_to_timestamp() {
+	local QS_TIME_IN_SECONDS=$1
+
+	printf '%d:%02d' $[QS_TIME_IN_SECONDS / 60] $[QS_TIME_IN_SECONDS % 60]
 }
