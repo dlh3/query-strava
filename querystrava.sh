@@ -5,11 +5,13 @@ mkdir ~/.querystrava &> /dev/null
 
 
 ### FIELDS
-# QS_CLIENT_ID
-# QS_CLIENT_SECRET
-# QS_AUTH_TOKEN
-# QS_REFRESH_TOKEN
-# QS_AUTH_TOKEN_EXPIRY
+QS_AUTH_CALLBACK_PORT=5744
+
+QS_CLIENT_ID=$QS_CLIENT_ID
+QS_CLIENT_SECRET=$QS_CLIENT_SECRET
+QS_AUTH_TOKEN=$QS_AUTH_TOKEN
+QS_REFRESH_TOKEN=$QS_REFRESH_TOKEN
+QS_AUTH_TOKEN_EXPIRY=$QS_AUTH_TOKEN_EXPIRY
 
 
 ### HELPERS
@@ -30,20 +32,32 @@ qs_auth() {
 	if [[ -z $QS_CLIENT_ID || -z $QS_CLIENT_SECRET ]]; then
 		echo "Client ID and secret required"
 		echo
-		echo "Retrieve from https://www.strava.com/settings/api"
+
+		local QS_API_SETTINGS_URL="https://www.strava.com/settings/api"
+		echo "Opening browser to: ${QS_API_SETTINGS_URL}"
+		open $QS_API_SETTINGS_URL
+		echo
+
 		read -p 'Client ID: ' QS_CLIENT_ID
 		read -p 'Client secret: ' QS_CLIENT_SECRET
 		echo
 	fi
 
-	echo "Authorize the application here: https://www.strava.com/oauth/authorize?client_id=${QS_CLIENT_ID}&redirect_uri=http://localhost:8080/site/&response_type=code&scope=read_all,activity:read_all,profile:read_all"
 
-	local QS_AUTH_CODE
-	read -p 'Code (from callback URL): ' QS_AUTH_CODE
+	local QS_AUTH_URL="https://www.strava.com/oauth/authorize?client_id=${QS_CLIENT_ID}&redirect_uri=http://localhost:${QS_AUTH_CALLBACK_PORT}/&response_type=code&scope=read_all,activity:read_all,profile:read_all"
+	echo "Opening browser to: ${QS_AUTH_URL}"
+	open $QS_AUTH_URL
+
+	echo "Listening for callback on port ${QS_AUTH_CALLBACK_PORT}"
+	local QS_AUTH_CODE=$(echo -e 'HTTP/1.1 200 OK\n\n<h1>Success!</h1>\n<h2>Return to console.</h2>\n' | nc -l $QS_AUTH_CALLBACK_PORT | head -n1 | sed -E 's|^.+code=([^&]+)&?[^&]*$|\1|')
 	echo
 
-	http POST "https://www.strava.com/oauth/token?client_id=${QS_CLIENT_ID}&client_secret=${QS_CLIENT_SECRET}&code=${QS_AUTH_CODE}&grant_type=authorization_code" \
-	 | qs_parse_auth_response
+
+	local QS_AUTH_RESPONSE=$(http POST "https://www.strava.com/oauth/token?client_id=${QS_CLIENT_ID}&client_secret=${QS_CLIENT_SECRET}&code=${QS_AUTH_CODE}&grant_type=authorization_code")
+
+	QS_AUTH_TOKEN=$(echo ${QS_AUTH_RESPONSE} | jq -r '.access_token')
+	QS_REFRESH_TOKEN=$(echo ${QS_AUTH_RESPONSE} | jq -r '.refresh_token')
+	QS_AUTH_TOKEN_EXPIRY=$(echo ${QS_AUTH_RESPONSE} | jq -r '.expires_at')
 
 	echo "Auth token: ${QS_AUTH_TOKEN}"
 	echo "Refresh token: ${QS_REFRESH_TOKEN}"
@@ -52,17 +66,12 @@ qs_auth() {
 
 qs_touch_auth() {
 	if [[ `date +%s` -gt $[QS_AUTH_TOKEN_EXPIRY - 3600] ]]; then
-		http POST "https://www.strava.com/oauth/token?client_id=${QS_CLIENT_ID}&client_secret=${QS_CLIENT_SECRET}&refresh_token=${QS_REFRESH_TOKEN}&grant_type=refresh_token" \
-		 | qs_parse_auth_response
+		local QS_AUTH_RESPONSE=$(http POST "https://www.strava.com/oauth/token?client_id=${QS_CLIENT_ID}&client_secret=${QS_CLIENT_SECRET}&refresh_token=${QS_REFRESH_TOKEN}&grant_type=refresh_token")
+
+		QS_AUTH_TOKEN=$(echo ${QS_AUTH_RESPONSE} | jq -r '.access_token')
+		QS_REFRESH_TOKEN=$(echo ${QS_AUTH_RESPONSE} | jq -r '.refresh_token')
+		QS_AUTH_TOKEN_EXPIRY=$(echo ${QS_AUTH_RESPONSE} | jq -r '.expires_at')
 	fi
-}
-
-qs_parse_auth_response() {
-	local QS_AUTH_RESPONSE=$(jq '.')
-
-	QS_AUTH_TOKEN=$(echo ${QS_AUTH_RESPONSE} | jq -r '.access_token')
-	QS_REFRESH_TOKEN=$(echo ${QS_AUTH_RESPONSE} | jq -r '.refresh_token')
-	QS_AUTH_TOKEN_EXPIRY=$(echo ${QS_AUTH_RESPONSE} | jq -r '.expires_at')
 }
 
 
