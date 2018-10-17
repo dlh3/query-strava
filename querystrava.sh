@@ -51,7 +51,7 @@ qs_auth() {
 }
 
 qs_touch_auth() {
-	if [[ `date +%s` -gt $[$QS_AUTH_TOKEN_EXPIRY - 3600] ]]; then
+	if [[ `date +%s` -gt $[QS_AUTH_TOKEN_EXPIRY - 3600] ]]; then
 		http POST "https://www.strava.com/oauth/token?client_id=${QS_CLIENT_ID}&client_secret=${QS_CLIENT_SECRET}&refresh_token=${QS_REFRESH_TOKEN}&grant_type=refresh_token" \
 		 | qs_parse_auth_response
 	fi
@@ -96,12 +96,6 @@ qs_filter_segments_with_efforts() {
 }
 
 
-### ./jq FILTERS
-qs_get_id() {
-	jq '.[].id'
-}
-
-
 ### PROCESSORS
 qs_build_segment_board() {
 	local QS_SEGMENTS_INPUT=$(jq '.')
@@ -139,7 +133,7 @@ qs_build_segment_board() {
 		 <tbody>
 	" >> ~/.querystrava/segments.html
 
-	echo $QS_SEGMENTS_INPUT | qs_get_id | 
+	echo $QS_SEGMENTS_INPUT | jq '.[].id' | 
 	while read -r segmentId; do
 		local QS_SEGMENT=$(echo $QS_SEGMENTS_INPUT | jq "map(select(.id == $segmentId))")
 		local QS_SEGMENT_LEADERBOARD=$(qs_query_segment_leaderboard $segmentId &)
