@@ -217,6 +217,17 @@ qs_build_segment_board() {
 			QS_SEGMENT_TR_CLASSES="top10 ${QS_SEGMENT_TR_CLASSES}"
 		fi
 
+		local QS_SEGMENT_DELTA_FLAMES=""
+		if [ "$QS_SEGMENT_CR_DELTA" -eq 0 ]; then
+			QS_SEGMENT_DELTA_FLAMES=""
+		elif [ "$QS_SEGMENT_CR_DELTA" -le 5 ]; then
+			QS_SEGMENT_DELTA_FLAMES="🔥🔥🔥"
+		elif [ "$QS_SEGMENT_CR_DELTA" -le 15 ]; then
+			QS_SEGMENT_DELTA_FLAMES="🔥🔥"
+		elif [ "$QS_SEGMENT_CR_DELTA" -le 30 ]; then
+			QS_SEGMENT_DELTA_FLAMES="🔥"
+		fi
+
 		echo "
 			  <tr class=\"${QS_SEGMENT_TR_CLASSES}\">
 			   <td><a href=\"${QS_SEGMENT_URL}\">${segmentId}</a></td>
@@ -224,7 +235,7 @@ qs_build_segment_board() {
 			   <td>${QS_SEGMENT_ATHLETE_RANK} / ${QS_SEGMENT_ENTRIES}</td>
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_CR)</td>
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_PR)</td>
-			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_CR_DELTA)</td>
+			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_CR_DELTA) ${QS_SEGMENT_DELTA_FLAMES}</td>
 			   <td>$(echo $QS_SEGMENT | jq '.[].distance')</td>
 			   <td>$(echo $QS_SEGMENT | jq '.[].average_grade')</td>
 			   <td>$(echo $QS_SEGMENT | jq '.[].maximum_grade')</td>
