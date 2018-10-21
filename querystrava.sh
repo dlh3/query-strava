@@ -216,18 +216,18 @@ qs_build_segment_board() {
 
 	echo $QS_SEGMENTS_INPUT | jq '.[].id' | 
 	while read -r segmentId; do
-		local QS_SEGMENT=$(echo $QS_SEGMENTS_INPUT | jq "map(select(.id == $segmentId))")
+		local QS_SEGMENT=$(echo $QS_SEGMENTS_INPUT | jq "map(select(.id == $segmentId)) | .[0]")
 		local QS_SEGMENT_LEADERBOARD=$(qs_query_segment_leaderboard $segmentId &)
 
 		local QS_SEGMENT_URL="https://www.strava.com/segments/${segmentId}"
 		local QS_SEGMENT_ENTRIES=$(echo $QS_SEGMENT_LEADERBOARD | jq '.entry_count')
 
 		local QS_SEGMENT_CR=$(echo $QS_SEGMENT_LEADERBOARD | jq '.entries[0].elapsed_time')
-		local QS_SEGMENT_PR=$(echo $QS_SEGMENT | jq '.[].pr_time')
+		local QS_SEGMENT_PR=$(echo $QS_SEGMENT | jq '.pr_time')
 		local QS_SEGMENT_CR_DELTA=$[QS_SEGMENT_PR - QS_SEGMENT_CR]
 		local QS_SEGMENT_CR_DELTA_PERCENTAGE=$[10000 * QS_SEGMENT_CR_DELTA / QS_SEGMENT_CR]
 
-		local QS_SEGMENT_PR_START=$(echo $QS_SEGMENT | jq '.[].athlete_pr_effort.start_date')
+		local QS_SEGMENT_PR_START=$(echo $QS_SEGMENT | jq '.athlete_pr_effort.start_date')
 		local QS_SEGMENT_ATHLETE_RANK=$(echo $QS_SEGMENT_LEADERBOARD | jq ".entries | map(select(.elapsed_time == ${QS_SEGMENT_PR})) | .[0].rank")
 		local QS_SEGMENT_ATHLETE_RANK_IMPRESSIVENESS=$(bc <<< "scale=4; (1 - (${QS_SEGMENT_ATHLETE_RANK} / ${QS_SEGMENT_ENTRIES})) * 100")
 
@@ -265,19 +265,19 @@ qs_build_segment_board() {
 		echo "
 			  <tr class=\"${QS_SEGMENT_TR_CLASSES}\">
 			   <td><a href=\"${QS_SEGMENT_URL}\">${segmentId}</a></td>
-			   <td><span class=\"crown\">👑 </span><a href=\"${QS_SEGMENT_URL}\">$(echo $QS_SEGMENT | jq -r '.[].name')</a></td>
+			   <td><span class=\"crown\">👑 </span><a href=\"${QS_SEGMENT_URL}\">$(echo $QS_SEGMENT | jq -r '.name')</a></td>
 			   <td>${QS_SEGMENT_ATHLETE_RANK} / ${QS_SEGMENT_ENTRIES}</td>
 			   <td>$(printf "%.2f" ${QS_SEGMENT_ATHLETE_RANK_IMPRESSIVENESS})</td>
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_CR)</td>
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_PR)</td>
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_CR_DELTA) ${QS_SEGMENT_DELTA_FLAMES}</td>
 			   <td>$(printf "%.2f" $(bc <<< "scale=2; ${QS_SEGMENT_CR_DELTA_PERCENTAGE} / 100")) ${QS_SEGMENT_DELTA_PERCENTAGE_FLAMES}</td>
-			   <td>$(echo $QS_SEGMENT | jq '.[].distance')</td>
-			   <td>$(echo $QS_SEGMENT | jq '.[].average_grade')</td>
-			   <td>$(echo $QS_SEGMENT | jq '.[].maximum_grade')</td>
-			   <td>$(echo $QS_SEGMENT | jq '.[].elevation_low')</td>
-			   <td>$(echo $QS_SEGMENT | jq '.[].elevation_high')</td>
-			   <!-- $(echo $QS_SEGMENT | jq '.[].athlete_pr_effort') -->
+			   <td>$(echo $QS_SEGMENT | jq '.distance')</td>
+			   <td>$(echo $QS_SEGMENT | jq '.average_grade')</td>
+			   <td>$(echo $QS_SEGMENT | jq '.maximum_grade')</td>
+			   <td>$(echo $QS_SEGMENT | jq '.elevation_low')</td>
+			   <td>$(echo $QS_SEGMENT | jq '.elevation_high')</td>
+			   <!-- $(echo $QS_SEGMENT | jq '.athlete_pr_effort') -->
 			  </tr>
 		" >> ~/.querystrava/segments.html
 	done
