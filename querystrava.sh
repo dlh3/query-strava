@@ -201,6 +201,8 @@ qs_build_segment_board() {
 
 			\$(document).ready(() => \$('.tablesorter').tablesorter({ widgets: ['zebra'] }));
 		</script>
+
+		<base target=\"_blank\" />
 	   </head>
 	   <body>
 		<table class=\"tablesorter { sortlist: [[2,0]] }\">
@@ -243,8 +245,8 @@ qs_build_segment_board() {
 
 		echo "
 			  <tr class=\"$(qs_generate_segment_row_rank_class $QS_SEGMENT_ATHLETE_RANK)\">
-			   <td><a href=\"${QS_SEGMENT_URL}\" target=\"_blank\">${segmentId}</a></td>
-			   <td><span class=\"crown\">👑 </span><a href=\"${QS_SEGMENT_URL}\" target=\"_blank\">$(jq -r '.name' <<< $QS_SEGMENT)</a></td>
+			   <td><a href=\"${QS_SEGMENT_URL}\">${segmentId}</a></td>
+			   <td><span class=\"crown\">👑 </span><a href=\"${QS_SEGMENT_URL}\">$(jq -r '.name' <<< $QS_SEGMENT)</a></td>
 			   <td>${QS_SEGMENT_ATHLETE_RANK} / ${QS_SEGMENT_ENTRIES}</td>
 			   <td>$(printf "%.2f" ${QS_SEGMENT_ATHLETE_RANK_IMPRESSIVENESS})</td>
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_CR)</td>
