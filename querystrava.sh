@@ -102,6 +102,12 @@ qs_query_segments_starred() {
 	qs_query_strava "/segments/starred?per_page=${QS_QUERY_PAGE_SIZE}"
 }
 
+qs_query_segment() {
+	local QS_SEGMENT_ID=$1
+
+	qs_query_strava "/segments/${QS_SEGMENT_ID}"
+}
+
 qs_query_segment_leaderboard() {
 	local QS_SEGMENT_ID=$1
 
@@ -118,6 +124,17 @@ qs_filter_segments_with_efforts() {
 ### PROCESSORS
 qs_build_segment_board() {
 	local QS_SEGMENTS_INPUT=$(jq '.')
+
+	jq '.[].id' <<< $QS_SEGMENTS_INPUT | qs_build_segments_board_from_ids
+}
+
+qs_build_discovered_segments_board() {
+	# WIP: Refers to a file as an interim solution while testing refactored qs_build_segment_board/qs_build_segments_board_from_ids
+	cat ~/.querystrava/discovered_segments.uniq.lst | qs_build_segments_board_from_ids
+}
+
+qs_build_segments_board_from_ids() {
+	local QS_SEGMENT_IDS=$(</dev/stdin)
 
 	echo > ~/.querystrava/segments.html
 	echo "
@@ -226,21 +243,26 @@ qs_build_segment_board() {
 		 <tbody>
 	" >> ~/.querystrava/segments.html
 
-	echo $QS_SEGMENTS_INPUT | jq '.[].id' | 
 	while read -r segmentId; do
-		local QS_SEGMENT=$(jq "map(select(.id == $segmentId)) | .[0]" <<< $QS_SEGMENTS_INPUT)
+		[[ -z $segmentId ]] && continue
+		echo "Processing segment ${segmentId}"
+
+		local QS_SEGMENT=$(qs_query_segment $segmentId &)
 		local QS_SEGMENT_LEADERBOARD=$(qs_query_segment_leaderboard $segmentId &)
+
+		local QS_SEGMENT_LEADERBOARD_ENTRIES=$(jq '.entries' <<< $QS_SEGMENT_LEADERBOARD)
+		[[ "null" == "$QS_SEGMENT_LEADERBOARD_ENTRIES" ]] && echo "Error retrieving segment ${segmentId} leaderboard" && continue
 
 		local QS_SEGMENT_URL="https://www.strava.com/segments/${segmentId}"
 		local QS_SEGMENT_ENTRIES=$(jq '.entry_count' <<< $QS_SEGMENT_LEADERBOARD)
 
-		local QS_SEGMENT_CR=$(jq '.entries[0].elapsed_time' <<< $QS_SEGMENT_LEADERBOARD)
-		local QS_SEGMENT_PR=$(jq '.pr_time' <<< $QS_SEGMENT)
+		local QS_SEGMENT_CR=$(jq '.[0].elapsed_time' <<< $QS_SEGMENT_LEADERBOARD_ENTRIES)
+		local QS_SEGMENT_PR=$(jq '.athlete_segment_stats.pr_elapsed_time' <<< $QS_SEGMENT)
 		local QS_SEGMENT_CR_DELTA=$[QS_SEGMENT_PR - QS_SEGMENT_CR]
 		local QS_SEGMENT_CR_DELTA_PERCENTAGE=$[10000 * QS_SEGMENT_CR_DELTA / QS_SEGMENT_CR]
 
 		local QS_SEGMENT_PR_START=$(jq '.athlete_pr_effort.start_date' <<< $QS_SEGMENT)
-		local QS_SEGMENT_ATHLETE_RANK=$(jq ".entries | map(select(.elapsed_time == ${QS_SEGMENT_PR})) | .[0].rank" <<< $QS_SEGMENT_LEADERBOARD)
+		local QS_SEGMENT_ATHLETE_RANK=$(jq "map(select(.elapsed_time == ${QS_SEGMENT_PR})) | .[0].rank" <<< $QS_SEGMENT_LEADERBOARD_ENTRIES)
 		local QS_SEGMENT_ATHLETE_RANK_IMPRESSIVENESS=$(bc <<< "scale=4; (1 - (${QS_SEGMENT_ATHLETE_RANK} / ${QS_SEGMENT_ENTRIES})) * 100")
 
 		echo "
@@ -261,7 +283,7 @@ qs_build_segment_board() {
 			   <!-- $(jq '.athlete_pr_effort' <<< $QS_SEGMENT) -->
 			  </tr>
 		" >> ~/.querystrava/segments.html
-	done
+	done <<< "$QS_SEGMENT_IDS"
 
 	echo "
 		 </tbody>
