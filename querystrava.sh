@@ -82,7 +82,7 @@ qs_query_strava() {
 	local QS_QUERY_BASE_URL='https://www.strava.com/api/v3'
 
 	qs_touch_auth
-	local QS_RESPONSE=$(http ${QS_QUERY_METHOD} "${QS_QUERY_BASE_URL}${QS_QUERY_URI}" "Authorization:Bearer ${QS_AUTH_TOKEN}")
+	local QS_RESPONSE=$(http ${QS_QUERY_METHOD} "${QS_QUERY_BASE_URL}${QS_QUERY_URI}" "Authorization: Bearer ${QS_AUTH_TOKEN}")
 	echo $QS_RESPONSE  | jq '.'
 }
 
@@ -114,6 +114,39 @@ qs_build_segment_board() {
 	   <html>
 	   <head>
 		<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/gh/christianbach/tablesorter@07e0918254df3c2057d6d8e4653a0769f1881412/themes/blue/style.css\" />
+		<style>
+			tr span.crown {
+				visibility: hidden;
+			}
+
+			tr.king span.crown {
+				visibility: visible;
+			}
+
+			table.tablesorter tbody tr.king.odd td {
+				background-color: limegreen;
+			}
+
+			table.tablesorter tbody tr.king.even td {
+				background-color: lightgreen;
+			}
+
+			table.tablesorter tbody tr.top5.odd td {
+				background-color: palegoldenrod;
+			}
+
+			table.tablesorter tbody tr.top5.even td {
+				background-color: lightgoldenrodyellow;
+			}
+
+			table.tablesorter tbody tr.top10.odd td {
+				background-color: lightblue;
+			}
+
+			table.tablesorter tbody tr.top10.even td {
+				background-color: paleturquoise;
+			}
+		</style>
 
 		<script type=\"text/javascript\" src=\"https://cdn.jsdelivr.net/gh/christianbach/tablesorter@07e0918254df3c2057d6d8e4653a0769f1881412/jquery-latest.js\"></script>
 		<script type=\"text/javascript\" src=\"https://cdn.jsdelivr.net/gh/christianbach/tablesorter@07e0918254df3c2057d6d8e4653a0769f1881412/jquery.tablesorter.js\"></script>
@@ -157,10 +190,19 @@ qs_build_segment_board() {
 		local QS_SEGMENT_PR_START=$(echo $QS_SEGMENT | jq '.[].athlete_pr_effort.start_date')
 		local QS_SEGMENT_ATHLETE_RANK=$(echo $QS_SEGMENT_LEADERBOARD | jq ".entries | map(select(.elapsed_time == ${QS_SEGMENT_PR})) | map(select(.start_date == ${QS_SEGMENT_PR_START})) | .[].rank")
 
+		local QS_SEGMENT_TR_CLASSES=""
+		if [ "$QS_SEGMENT_ATHLETE_RANK" -eq 1 ]; then
+			QS_SEGMENT_TR_CLASSES="king ${QS_SEGMENT_TR_CLASSES}"
+		elif [ "$QS_SEGMENT_ATHLETE_RANK" -le 5 ]; then
+			QS_SEGMENT_TR_CLASSES="top5 ${QS_SEGMENT_TR_CLASSES}"
+		elif [ "$QS_SEGMENT_ATHLETE_RANK" -le 10 ]; then
+			QS_SEGMENT_TR_CLASSES="top10 ${QS_SEGMENT_TR_CLASSES}"
+		fi
+
 		echo "
-			  <tr>
-			   <td><a href='${QS_SEGMENT_URL}'>${segmentId}</a></td>
-			   <td><a href='${QS_SEGMENT_URL}'>$(echo $QS_SEGMENT | jq -r '.[].name')</a></td>
+			  <tr class=\"${QS_SEGMENT_TR_CLASSES}\">
+			   <td><a href=\"${QS_SEGMENT_URL}\">${segmentId}</a></td>
+			   <td><span class=\"crown\">👑 </span><a href=\"${QS_SEGMENT_URL}\">$(echo $QS_SEGMENT | jq -r '.[].name')</a></td>
 			   <td>${QS_SEGMENT_ATHLETE_RANK} / ${QS_SEGMENT_ENTRIES}</td>
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_CR)</td>
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_PR)</td>
@@ -170,7 +212,7 @@ qs_build_segment_board() {
 			   <td>$(echo $QS_SEGMENT | jq '.[].maximum_grade')</td>
 			   <td>$(echo $QS_SEGMENT | jq '.[].elevation_low')</td>
 			   <td>$(echo $QS_SEGMENT | jq '.[].elevation_high')</td>
-			   <!-- td>$(echo $QS_SEGMENT | jq '.[].athlete_pr_effort')</td -->
+			   <!-- $(echo $QS_SEGMENT | jq '.[].athlete_pr_effort') -->
 			  </tr>
 		" >> ~/.querystrava/segments.html
 	done
