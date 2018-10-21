@@ -154,7 +154,7 @@ qs_build_segment_board() {
 		<script type=\"text/javascript\">
 			$.tablesorter.addParser({ 
 				// set a unique id 
-				id: 'rank', 
+				id: 'chopSpace', 
 
 				// return false so this parser is not auto detected 
 				is: function(s) { 
@@ -163,7 +163,26 @@ qs_build_segment_board() {
 
 				// format your data for normalization 
 				format: function(s) { 
-					return s.replace(/ .+$/, '');
+					return s.replace(/ .*$/, '');
+				}, 
+
+				// set type, either numeric or text 
+				type: 'numeric' 
+			}); 
+
+			$.tablesorter.addParser({ 
+				// set a unique id 
+				id: 'timestamp', 
+
+				// return false so this parser is not auto detected 
+				is: function(s) { 
+					return false; 
+				}, 
+
+				// format your data for normalization 
+				format: function(s) { 
+					var parts = s.replace(/ .*$/, '').split(':');
+					return (parts[0] * 60) + parts[1];
 				}, 
 
 				// set type, either numeric or text 
@@ -179,10 +198,12 @@ qs_build_segment_board() {
 		  <tr>
 		   <th>ID</th>
 		   <th>Name</th>
-		   <th class=\"{ sorter: 'rank' }\">Rank</th>
-		   <th>CR Time (MM:SS)</th>
-		   <th>PR Time (MM:SS)</th>
-		   <th>Delta (MM:SS)</th>
+		   <th class=\"{ sorter: 'chopSpace' }\">Rank</th>
+		   <th>Rank Impressiveness</th>
+		   <th class=\"{ sorter: 'timestamp' }\">CR Time (MM:SS)</th>
+		   <th class=\"{ sorter: 'timestamp' }\">PR Time (MM:SS)</th>
+		   <th class=\"{ sorter: 'timestamp' }\">Delta (MM:SS)</th>
+		   <th class=\"{ sorter: 'chopSpace' }\">Delta (%)</th>
 		   <th>Distance (m)</th>
 		   <th>Average Grade (%)</th>
 		   <th>Maximum Grade (%)</th>
@@ -204,9 +225,11 @@ qs_build_segment_board() {
 		local QS_SEGMENT_CR=$(echo $QS_SEGMENT_LEADERBOARD | jq '.entries[0].elapsed_time')
 		local QS_SEGMENT_PR=$(echo $QS_SEGMENT | jq '.[].pr_time')
 		local QS_SEGMENT_CR_DELTA=$[QS_SEGMENT_PR - QS_SEGMENT_CR]
+		local QS_SEGMENT_CR_DELTA_PERCENTAGE=$[10000 * QS_SEGMENT_CR_DELTA / QS_SEGMENT_CR]
 
 		local QS_SEGMENT_PR_START=$(echo $QS_SEGMENT | jq '.[].athlete_pr_effort.start_date')
 		local QS_SEGMENT_ATHLETE_RANK=$(echo $QS_SEGMENT_LEADERBOARD | jq ".entries | map(select(.elapsed_time == ${QS_SEGMENT_PR})) | map(select(.start_date == ${QS_SEGMENT_PR_START})) | .[].rank")
+		local QS_SEGMENT_ATHLETE_RANK_IMPRESSIVENESS=$(bc <<< "scale=4; (1 - (${QS_SEGMENT_ATHLETE_RANK} / ${QS_SEGMENT_ENTRIES})) * 100")
 
 		local QS_SEGMENT_TR_CLASSES=""
 		if [ "$QS_SEGMENT_ATHLETE_RANK" -eq 1 ]; then
@@ -228,14 +251,27 @@ qs_build_segment_board() {
 			QS_SEGMENT_DELTA_FLAMES="🔥"
 		fi
 
+		local QS_SEGMENT_DELTA_PERCENTAGE_FLAMES=""
+		if [ "$QS_SEGMENT_CR_DELTA" -eq 0 ]; then
+			QS_SEGMENT_DELTA_PERCENTAGE_FLAMES=""
+		elif [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le 500 ]; then
+			QS_SEGMENT_DELTA_PERCENTAGE_FLAMES="🔥🔥🔥"
+		elif [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le 1000 ]; then
+			QS_SEGMENT_DELTA_PERCENTAGE_FLAMES="🔥🔥"
+		elif [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le 1500 ]; then
+			QS_SEGMENT_DELTA_PERCENTAGE_FLAMES="🔥"
+		fi
+
 		echo "
 			  <tr class=\"${QS_SEGMENT_TR_CLASSES}\">
 			   <td><a href=\"${QS_SEGMENT_URL}\">${segmentId}</a></td>
 			   <td><span class=\"crown\">👑 </span><a href=\"${QS_SEGMENT_URL}\">$(echo $QS_SEGMENT | jq -r '.[].name')</a></td>
 			   <td>${QS_SEGMENT_ATHLETE_RANK} / ${QS_SEGMENT_ENTRIES}</td>
+			   <td>${QS_SEGMENT_ATHLETE_RANK_IMPRESSIVENESS}</td>
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_CR)</td>
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_PR)</td>
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_CR_DELTA) ${QS_SEGMENT_DELTA_FLAMES}</td>
+			   <td>$(printf "%.2f" $(bc <<< "scale=2; ${QS_SEGMENT_CR_DELTA_PERCENTAGE} / 100")) ${QS_SEGMENT_DELTA_PERCENTAGE_FLAMES}</td>
 			   <td>$(echo $QS_SEGMENT | jq '.[].distance')</td>
 			   <td>$(echo $QS_SEGMENT | jq '.[].average_grade')</td>
 			   <td>$(echo $QS_SEGMENT | jq '.[].maximum_grade')</td>
