@@ -44,7 +44,7 @@ qs_auth() {
 	fi
 
 
-	local QS_AUTH_URL="https://www.strava.com/oauth/authorize?client_id=${QS_CLIENT_ID}&redirect_uri=http://localhost:${QS_AUTH_CALLBACK_PORT}/&response_type=code&scope=read_all,activity:read_all,profile:read_all"
+	local QS_AUTH_URL="https://www.strava.com/oauth/authorize?client_id=${QS_CLIENT_ID}&redirect_uri=http://localhost:${QS_AUTH_CALLBACK_PORT}/&response_type=code&scope=read,read_all,activity:read,activity:read_all,profile:read_all"
 	echo "Opening browser to: ${QS_AUTH_URL}"
 	open $QS_AUTH_URL
 
