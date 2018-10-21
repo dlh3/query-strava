@@ -234,47 +234,16 @@ qs_build_segment_board() {
 		local QS_SEGMENT_ATHLETE_RANK=$(jq ".entries | map(select(.elapsed_time == ${QS_SEGMENT_PR})) | .[0].rank" <<< $QS_SEGMENT_LEADERBOARD)
 		local QS_SEGMENT_ATHLETE_RANK_IMPRESSIVENESS=$(bc <<< "scale=4; (1 - (${QS_SEGMENT_ATHLETE_RANK} / ${QS_SEGMENT_ENTRIES})) * 100")
 
-		local QS_SEGMENT_TR_CLASSES=""
-		if [ "$QS_SEGMENT_ATHLETE_RANK" -eq 1 ]; then
-			QS_SEGMENT_TR_CLASSES="king ${QS_SEGMENT_TR_CLASSES}"
-		elif [ "$QS_SEGMENT_ATHLETE_RANK" -le 5 ]; then
-			QS_SEGMENT_TR_CLASSES="top5 ${QS_SEGMENT_TR_CLASSES}"
-		elif [ "$QS_SEGMENT_ATHLETE_RANK" -le 10 ]; then
-			QS_SEGMENT_TR_CLASSES="top10 ${QS_SEGMENT_TR_CLASSES}"
-		fi
-
-		local QS_SEGMENT_DELTA_FLAMES=""
-		if [ "$QS_SEGMENT_CR_DELTA" -eq 0 ]; then
-			QS_SEGMENT_DELTA_FLAMES=""
-		elif [ "$QS_SEGMENT_CR_DELTA" -le 5 ]; then
-			QS_SEGMENT_DELTA_FLAMES="🔥🔥🔥"
-		elif [ "$QS_SEGMENT_CR_DELTA" -le 15 ]; then
-			QS_SEGMENT_DELTA_FLAMES="🔥🔥"
-		elif [ "$QS_SEGMENT_CR_DELTA" -le 30 ]; then
-			QS_SEGMENT_DELTA_FLAMES="🔥"
-		fi
-
-		local QS_SEGMENT_DELTA_PERCENTAGE_FLAMES=""
-		if [ "$QS_SEGMENT_CR_DELTA" -eq 0 ]; then
-			QS_SEGMENT_DELTA_PERCENTAGE_FLAMES=""
-		elif [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le 500 ]; then
-			QS_SEGMENT_DELTA_PERCENTAGE_FLAMES="🔥🔥🔥"
-		elif [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le 1000 ]; then
-			QS_SEGMENT_DELTA_PERCENTAGE_FLAMES="🔥🔥"
-		elif [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le 1500 ]; then
-			QS_SEGMENT_DELTA_PERCENTAGE_FLAMES="🔥"
-		fi
-
 		echo "
-			  <tr class=\"${QS_SEGMENT_TR_CLASSES}\">
+			  <tr class=\"$(qs_generate_segment_row_rank_class $QS_SEGMENT_ATHLETE_RANK)\">
 			   <td><a href=\"${QS_SEGMENT_URL}\">${segmentId}</a></td>
 			   <td><span class=\"crown\">👑 </span><a href=\"${QS_SEGMENT_URL}\">$(jq -r '.name' <<< $QS_SEGMENT)</a></td>
 			   <td>${QS_SEGMENT_ATHLETE_RANK} / ${QS_SEGMENT_ENTRIES}</td>
 			   <td>$(printf "%.2f" ${QS_SEGMENT_ATHLETE_RANK_IMPRESSIVENESS})</td>
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_CR)</td>
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_PR)</td>
-			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_CR_DELTA) ${QS_SEGMENT_DELTA_FLAMES}</td>
-			   <td>$(printf "%.2f" $(bc <<< "scale=2; ${QS_SEGMENT_CR_DELTA_PERCENTAGE} / 100")) ${QS_SEGMENT_DELTA_PERCENTAGE_FLAMES}</td>
+			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_CR_DELTA) $(qs_generate_segment_delta_flames $QS_SEGMENT_CR_DELTA)</td>
+			   <td>$(printf "%.2f" $(bc <<< "scale=2; ${QS_SEGMENT_CR_DELTA_PERCENTAGE} / 100")) $(qs_generate_segment_delta_percentage_flames $QS_SEGMENT_CR_DELTA_PERCENTAGE)</td>
 			   <td>$(jq '.distance' <<< $QS_SEGMENT)</td>
 			   <td>$(jq '.average_grade' <<< $QS_SEGMENT)</td>
 			   <td>$(jq '.maximum_grade' <<< $QS_SEGMENT)</td>
@@ -298,4 +267,44 @@ qs_seconds_to_timestamp() {
 	local QS_TIME_IN_SECONDS=$1
 
 	printf '%d:%02d' $[QS_TIME_IN_SECONDS / 60] $[QS_TIME_IN_SECONDS % 60]
+}
+
+qs_generate_segment_row_rank_class() {
+	local QS_SEGMENT_ATHLETE_RANK=$1
+
+	if [ "$QS_SEGMENT_ATHLETE_RANK" -eq 1 ]; then
+		echo "king"
+	elif [ "$QS_SEGMENT_ATHLETE_RANK" -le 5 ]; then
+		echo "top5"
+	elif [ "$QS_SEGMENT_ATHLETE_RANK" -le 10 ]; then
+		echo "top10"
+	fi
+}
+
+qs_generate_segment_delta_flames() {
+	local QS_SEGMENT_CR_DELTA=$1
+
+	if [ "$QS_SEGMENT_CR_DELTA" -eq 0 ]; then
+		echo ""
+	elif [ "$QS_SEGMENT_CR_DELTA" -le 5 ]; then
+		echo "🔥🔥🔥"
+	elif [ "$QS_SEGMENT_CR_DELTA" -le 15 ]; then
+		echo "🔥🔥"
+	elif [ "$QS_SEGMENT_CR_DELTA" -le 30 ]; then
+		echo "🔥"
+	fi
+}
+
+qs_generate_segment_delta_percentage_flames() {
+	local QS_SEGMENT_CR_DELTA_PERCENTAGE=$1
+
+	if [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -eq 0 ]; then
+		echo ""
+	elif [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le 500 ]; then
+		echo "🔥🔥🔥"
+	elif [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le 1000 ]; then
+		echo "🔥🔥"
+	elif [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le 1500 ]; then
+		echo "🔥"
+	fi
 }
