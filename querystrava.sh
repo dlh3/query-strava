@@ -228,7 +228,7 @@ qs_build_segment_board() {
 		local QS_SEGMENT_CR_DELTA_PERCENTAGE=$[10000 * QS_SEGMENT_CR_DELTA / QS_SEGMENT_CR]
 
 		local QS_SEGMENT_PR_START=$(echo $QS_SEGMENT | jq '.[].athlete_pr_effort.start_date')
-		local QS_SEGMENT_ATHLETE_RANK=$(echo $QS_SEGMENT_LEADERBOARD | jq ".entries | map(select(.elapsed_time == ${QS_SEGMENT_PR})) | map(select(.start_date == ${QS_SEGMENT_PR_START})) | .[].rank")
+		local QS_SEGMENT_ATHLETE_RANK=$(echo $QS_SEGMENT_LEADERBOARD | jq ".entries | map(select(.elapsed_time == ${QS_SEGMENT_PR})) | .[0].rank")
 		local QS_SEGMENT_ATHLETE_RANK_IMPRESSIVENESS=$(bc <<< "scale=4; (1 - (${QS_SEGMENT_ATHLETE_RANK} / ${QS_SEGMENT_ENTRIES})) * 100")
 
 		local QS_SEGMENT_TR_CLASSES=""
@@ -267,7 +267,7 @@ qs_build_segment_board() {
 			   <td><a href=\"${QS_SEGMENT_URL}\">${segmentId}</a></td>
 			   <td><span class=\"crown\">👑 </span><a href=\"${QS_SEGMENT_URL}\">$(echo $QS_SEGMENT | jq -r '.[].name')</a></td>
 			   <td>${QS_SEGMENT_ATHLETE_RANK} / ${QS_SEGMENT_ENTRIES}</td>
-			   <td>${QS_SEGMENT_ATHLETE_RANK_IMPRESSIVENESS}</td>
+			   <td>$(printf "%.2f" ${QS_SEGMENT_ATHLETE_RANK_IMPRESSIVENESS})</td>
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_CR)</td>
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_PR)</td>
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_CR_DELTA) ${QS_SEGMENT_DELTA_FLAMES}</td>
