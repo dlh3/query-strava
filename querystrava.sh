@@ -48,16 +48,19 @@ qs_auth() {
 	echo "Opening browser to: ${QS_AUTH_URL}"
 	open $QS_AUTH_URL
 
-	echo "Listening for callback on port ${QS_AUTH_CALLBACK_PORT}"
-	local QS_AUTH_CODE=$(echo -e 'HTTP/1.1 200 OK\n\n<h1>Success!</h1>\n<h2>Return to console.</h2>\n' | nc -l $QS_AUTH_CALLBACK_PORT | head -n1 | sed -E 's|^.+code=([^&]+)&?[^&]*$|\1|')
+	echo "Listening for callback on port ${QS_AUTH_CALLBACK_PORT}..."
+	local QS_AUTH_CALLBACK_REQUEST=$(echo -e 'HTTP/1.1 200 OK\n\n<h1>Success!</h1>\n<h2>Return to console.</h2>\n' | \
+										nc -l $QS_AUTH_CALLBACK_PORT | head -n1)
+	local QS_AUTH_CODE=$(sed -E 's|^.+code=([^&]+)&?[^&]*$|\1|' <<< $QS_AUTH_CALLBACK_REQUEST)
+	echo "Received callback: ${QS_AUTH_CALLBACK_REQUEST}"
 	echo
 
 
 	local QS_AUTH_RESPONSE=$(http POST "https://www.strava.com/oauth/token?client_id=${QS_CLIENT_ID}&client_secret=${QS_CLIENT_SECRET}&code=${QS_AUTH_CODE}&grant_type=authorization_code")
 
-	QS_AUTH_TOKEN=$(echo ${QS_AUTH_RESPONSE} | jq -r '.access_token')
-	QS_REFRESH_TOKEN=$(echo ${QS_AUTH_RESPONSE} | jq -r '.refresh_token')
-	QS_AUTH_TOKEN_EXPIRY=$(echo ${QS_AUTH_RESPONSE} | jq -r '.expires_at')
+	QS_AUTH_TOKEN=$(jq -r '.access_token' <<< $QS_AUTH_RESPONSE)
+	QS_REFRESH_TOKEN=$(jq -r '.refresh_token' <<< $QS_AUTH_RESPONSE)
+	QS_AUTH_TOKEN_EXPIRY=$(jq -r '.expires_at' <<< $QS_AUTH_RESPONSE)
 
 	echo "Auth token: ${QS_AUTH_TOKEN}"
 	echo "Refresh token: ${QS_REFRESH_TOKEN}"
@@ -68,9 +71,9 @@ qs_touch_auth() {
 	if [[ `date +%s` -gt $[QS_AUTH_TOKEN_EXPIRY - 3600] ]]; then
 		local QS_AUTH_RESPONSE=$(http POST "https://www.strava.com/oauth/token?client_id=${QS_CLIENT_ID}&client_secret=${QS_CLIENT_SECRET}&refresh_token=${QS_REFRESH_TOKEN}&grant_type=refresh_token")
 
-		QS_AUTH_TOKEN=$(echo ${QS_AUTH_RESPONSE} | jq -r '.access_token')
-		QS_REFRESH_TOKEN=$(echo ${QS_AUTH_RESPONSE} | jq -r '.refresh_token')
-		QS_AUTH_TOKEN_EXPIRY=$(echo ${QS_AUTH_RESPONSE} | jq -r '.expires_at')
+		QS_AUTH_TOKEN=$(jq -r '.access_token' <<< $QS_AUTH_RESPONSE)
+		QS_REFRESH_TOKEN=$(jq -r '.refresh_token' <<< $QS_AUTH_RESPONSE)
+		QS_AUTH_TOKEN_EXPIRY=$(jq -r '.expires_at' <<< $QS_AUTH_RESPONSE)
 	fi
 }
 
@@ -83,7 +86,7 @@ qs_query_strava() {
 
 	qs_touch_auth
 	local QS_RESPONSE=$(http ${QS_QUERY_METHOD} "${QS_QUERY_BASE_URL}${QS_QUERY_URI}" "Authorization: Bearer ${QS_AUTH_TOKEN}")
-	echo $QS_RESPONSE  | jq '.'
+	jq '.' <<< $QS_RESPONSE
 }
 
 qs_query_segments_starred() {
@@ -216,19 +219,19 @@ qs_build_segment_board() {
 
 	echo $QS_SEGMENTS_INPUT | jq '.[].id' | 
 	while read -r segmentId; do
-		local QS_SEGMENT=$(echo $QS_SEGMENTS_INPUT | jq "map(select(.id == $segmentId)) | .[0]")
+		local QS_SEGMENT=$(jq "map(select(.id == $segmentId)) | .[0]" <<< $QS_SEGMENTS_INPUT)
 		local QS_SEGMENT_LEADERBOARD=$(qs_query_segment_leaderboard $segmentId &)
 
 		local QS_SEGMENT_URL="https://www.strava.com/segments/${segmentId}"
-		local QS_SEGMENT_ENTRIES=$(echo $QS_SEGMENT_LEADERBOARD | jq '.entry_count')
+		local QS_SEGMENT_ENTRIES=$(jq '.entry_count' <<< $QS_SEGMENT_LEADERBOARD)
 
-		local QS_SEGMENT_CR=$(echo $QS_SEGMENT_LEADERBOARD | jq '.entries[0].elapsed_time')
-		local QS_SEGMENT_PR=$(echo $QS_SEGMENT | jq '.pr_time')
+		local QS_SEGMENT_CR=$(jq '.entries[0].elapsed_time' <<< $QS_SEGMENT_LEADERBOARD)
+		local QS_SEGMENT_PR=$(jq '.pr_time' <<< $QS_SEGMENT)
 		local QS_SEGMENT_CR_DELTA=$[QS_SEGMENT_PR - QS_SEGMENT_CR]
 		local QS_SEGMENT_CR_DELTA_PERCENTAGE=$[10000 * QS_SEGMENT_CR_DELTA / QS_SEGMENT_CR]
 
-		local QS_SEGMENT_PR_START=$(echo $QS_SEGMENT | jq '.athlete_pr_effort.start_date')
-		local QS_SEGMENT_ATHLETE_RANK=$(echo $QS_SEGMENT_LEADERBOARD | jq ".entries | map(select(.elapsed_time == ${QS_SEGMENT_PR})) | .[0].rank")
+		local QS_SEGMENT_PR_START=$(jq '.athlete_pr_effort.start_date' <<< $QS_SEGMENT)
+		local QS_SEGMENT_ATHLETE_RANK=$(jq ".entries | map(select(.elapsed_time == ${QS_SEGMENT_PR})) | .[0].rank" <<< $QS_SEGMENT_LEADERBOARD)
 		local QS_SEGMENT_ATHLETE_RANK_IMPRESSIVENESS=$(bc <<< "scale=4; (1 - (${QS_SEGMENT_ATHLETE_RANK} / ${QS_SEGMENT_ENTRIES})) * 100")
 
 		local QS_SEGMENT_TR_CLASSES=""
@@ -265,19 +268,19 @@ qs_build_segment_board() {
 		echo "
 			  <tr class=\"${QS_SEGMENT_TR_CLASSES}\">
 			   <td><a href=\"${QS_SEGMENT_URL}\">${segmentId}</a></td>
-			   <td><span class=\"crown\">👑 </span><a href=\"${QS_SEGMENT_URL}\">$(echo $QS_SEGMENT | jq -r '.name')</a></td>
+			   <td><span class=\"crown\">👑 </span><a href=\"${QS_SEGMENT_URL}\">$(jq -r '.name' <<< $QS_SEGMENT)</a></td>
 			   <td>${QS_SEGMENT_ATHLETE_RANK} / ${QS_SEGMENT_ENTRIES}</td>
 			   <td>$(printf "%.2f" ${QS_SEGMENT_ATHLETE_RANK_IMPRESSIVENESS})</td>
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_CR)</td>
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_PR)</td>
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_CR_DELTA) ${QS_SEGMENT_DELTA_FLAMES}</td>
 			   <td>$(printf "%.2f" $(bc <<< "scale=2; ${QS_SEGMENT_CR_DELTA_PERCENTAGE} / 100")) ${QS_SEGMENT_DELTA_PERCENTAGE_FLAMES}</td>
-			   <td>$(echo $QS_SEGMENT | jq '.distance')</td>
-			   <td>$(echo $QS_SEGMENT | jq '.average_grade')</td>
-			   <td>$(echo $QS_SEGMENT | jq '.maximum_grade')</td>
-			   <td>$(echo $QS_SEGMENT | jq '.elevation_low')</td>
-			   <td>$(echo $QS_SEGMENT | jq '.elevation_high')</td>
-			   <!-- $(echo $QS_SEGMENT | jq '.athlete_pr_effort') -->
+			   <td>$(jq '.distance' <<< $QS_SEGMENT)</td>
+			   <td>$(jq '.average_grade' <<< $QS_SEGMENT)</td>
+			   <td>$(jq '.maximum_grade' <<< $QS_SEGMENT)</td>
+			   <td>$(jq '.elevation_low' <<< $QS_SEGMENT)</td>
+			   <td>$(jq '.elevation_high' <<< $QS_SEGMENT)</td>
+			   <!-- $(jq '.athlete_pr_effort' <<< $QS_SEGMENT) -->
 			  </tr>
 		" >> ~/.querystrava/segments.html
 	done
