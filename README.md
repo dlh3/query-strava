@@ -6,10 +6,9 @@ The initial version of this is pretty rough, simply being a script which is sour
 
 ### Prerequisites
 
-Depends on [HTTPie](https://httpie.org/) and [jq](https://stedolan.github.io/jq/).  These are available with homebrew.
+Depends on [jq](https://stedolan.github.io/jq/).  This is available with homebrew.
 
 ```
-brew install http
 brew install jq
 ```
 
@@ -30,18 +29,18 @@ Start by authenticating to the Strava API.  The `qs_auth` function will prompt f
 $ qs_auth
 Client ID and secret required
 
-Retrieve from https://www.strava.com/settings/api
+Opening browser to: https://www.strava.com/settings/api
+
 Client ID: <prompts for client ID>
-Client secret: <prompts for client secret>
+Client secret: <prompts for client ID>
 
-Authorize the application here: https://www.strava.com/oauth/authorize?client_id=<client ID>redirect_uri=http://localhost:8080/site/&response_type=code&scope=read_all,activity:read_all,profile:read_all
-Code (from callback URL): <prompts for code>
+Opening browser to: https://www.strava.com/oauth/authorize?client_id=<client-id>&redirect_uri=http://localhost:5744/&response_type=code&scope=read,read_all,activity:read,activity:read_all,profile:read_all
+Listening for callback on port 5744...
+Received callback: GET /?state=&code=49be4a9e9ba7a8811e99c50c9eb6a200156e5c35&scope=read,read_all,activity:read,activity:read_all,profile:read_all HTTP/1.1
 
-Auth token: 3a81d6f3aa3a9eee6fabfa666e99608280db534a
-Refresh token: daaa2a3bc5d5cc5535f041284a4791e5ae38916f
-Token expires: Tue 16 Oct 2018 00:47:30 PDT
-
-
+Auth token: fe228c92d5733787138da7efa2ff68d6b7d9cbbe
+Refresh token: d57d043797424da7ed5aab1dc592f85ee1c8af31
+Token expires: Sun 21 Oct 2018 17:34:56 PDT
 # If you need to re-authenticate, the client ID and secret will be saved, since those shouldn't change
 #  If you do need to change the client ID and secret, provide them as arguments to qs_auth
 $ qs_auth <client ID> <client secret>
