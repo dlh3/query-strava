@@ -152,16 +152,34 @@ qs_build_segment_board() {
 		<script type=\"text/javascript\" src=\"https://cdn.jsdelivr.net/gh/christianbach/tablesorter@07e0918254df3c2057d6d8e4653a0769f1881412/jquery.tablesorter.js\"></script>
 		<script type=\"text/javascript\" src=\"https://cdn.jsdelivr.net/gh/christianbach/tablesorter@07e0918254df3c2057d6d8e4653a0769f1881412/jquery.metadata.js\"></script>
 		<script type=\"text/javascript\">
+			$.tablesorter.addParser({ 
+				// set a unique id 
+				id: 'rank', 
+
+				// return false so this parser is not auto detected 
+				is: function(s) { 
+					return false; 
+				}, 
+
+				// format your data for normalization 
+				format: function(s) { 
+					return s.replace(/ .+$/, '');
+				}, 
+
+				// set type, either numeric or text 
+				type: 'numeric' 
+			}); 
+
 			\$(document).ready(() => \$('.tablesorter').tablesorter({ widgets: ['zebra'] }));
 		</script>
 	   </head>
 	   <body>
-		<table class=\"tablesorter { sortlist: [[5,0]] }\">
+		<table class=\"tablesorter { sortlist: [[2,0]] }\">
 		 <thead>
 		  <tr>
 		   <th>ID</th>
 		   <th>Name</th>
-		   <th>Rank</th>
+		   <th class=\"{ sorter: 'rank' }\">Rank</th>
 		   <th>CR Time (MM:SS)</th>
 		   <th>PR Time (MM:SS)</th>
 		   <th>Delta (MM:SS)</th>
