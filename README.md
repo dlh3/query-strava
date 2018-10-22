@@ -55,9 +55,12 @@ In general, usage begins with a query function, which is piped to filters/getter
 $ qs_query_segments_starred 50 | qs_filter_segments_with_efforts | qs_build_segment_board
 ```
 
+![Segment Board](https://github.com/dlh3/query-strava/raw/master/images/segment_board.png "Segment Board")
+
+
 ## Contributing
 
-Contributions are than welcome.
+Contributions are more than welcome.
 
 ## Authors
 
