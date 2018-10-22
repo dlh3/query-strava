@@ -209,8 +209,10 @@ qs_build_segments_board_from_ids() {
 
 				// format your data for normalization 
 				format: function(s) { 
+					var multiplier = s.startsWith('-') ? -1 : 1;
+
 					var parts = s.replace(/ .*$/, '').split(':');
-					return (parts[0] * 60) + parts[1];
+					return multiplier * ((Math.abs(parts[0]) * 60) + parts[1]);
 				}, 
 
 				// set type, either numeric or text 
@@ -240,7 +242,7 @@ qs_build_segments_board_from_ids() {
 		   <th>ID</th>
 		   <th>Name</th>
 		   <th class=\"{ sorter: 'chopSpace' }\">Rank</th>
-		   <th>Rank Impressiveness</th>
+		   <th>Impressiveness</th>
 		   <th class=\"{ sorter: 'timestamp' }\">CR Time (MM:SS)</th>
 		   <th class=\"{ sorter: 'timestamp' }\">PR Time (MM:SS)</th>
 		   <th class=\"{ sorter: 'timestamp' }\">Delta (MM:SS)</th>
@@ -270,12 +272,17 @@ qs_build_segments_board_from_ids() {
 
 		local QS_SEGMENT_CR=$(jq '.[0].elapsed_time' <<< $QS_SEGMENT_LEADERBOARD_ENTRIES)
 		local QS_SEGMENT_PR=$(jq '.athlete_segment_stats.pr_elapsed_time' <<< $QS_SEGMENT)
-		local QS_SEGMENT_CR_DELTA=$[QS_SEGMENT_PR - QS_SEGMENT_CR]
-		local QS_SEGMENT_CR_DELTA_PERCENTAGE=$[10000 * QS_SEGMENT_CR_DELTA / QS_SEGMENT_CR]
 
 		local QS_SEGMENT_PR_START=$(jq '.athlete_pr_effort.start_date' <<< $QS_SEGMENT)
 		local QS_SEGMENT_ATHLETE_RANK=$(jq "map(select(.elapsed_time == ${QS_SEGMENT_PR})) | .[0].rank" <<< $QS_SEGMENT_LEADERBOARD_ENTRIES)
 		local QS_SEGMENT_ATHLETE_RANK_IMPRESSIVENESS=$(bc <<< "scale=4; (1 - (${QS_SEGMENT_ATHLETE_RANK} / ${QS_SEGMENT_ENTRIES})) * 100")
+
+		local QS_SEGMENT_CR_DELTA=$[QS_SEGMENT_PR - QS_SEGMENT_CR]
+		if [ $QS_SEGMENT_ATHLETE_RANK -eq 1 ]; then
+			local QS_SEGMENT_RUNNERUP_TIME=$(jq "map(select(.rank == 2)) | .[0].elapsed_time" <<< $QS_SEGMENT_LEADERBOARD_ENTRIES)
+			local QS_SEGMENT_CR_DELTA=$[QS_SEGMENT_CR - QS_SEGMENT_RUNNERUP_TIME]
+		fi
+		local QS_SEGMENT_CR_DELTA_PERCENTAGE=$[10000 * QS_SEGMENT_CR_DELTA / QS_SEGMENT_CR]
 
 		echo "
 			  <tr id=\"${segmentId}\" class=\"$(qs_generate_segment_row_rank_class $QS_SEGMENT_ATHLETE_RANK)\">
@@ -309,7 +316,13 @@ qs_build_segments_board_from_ids() {
 qs_seconds_to_timestamp() {
 	local QS_TIME_IN_SECONDS=$1
 
-	printf '%d:%02d' $[QS_TIME_IN_SECONDS / 60] $[QS_TIME_IN_SECONDS % 60]
+	local QS_NEGATIVE_TIME=''
+	if [ "$QS_TIME_IN_SECONDS" -lt 0 ]; then
+		QS_TIME_IN_SECONDS=$[QS_TIME_IN_SECONDS * -1]
+		QS_NEGATIVE_TIME='-'
+	fi
+
+	printf "%s%d:%02d" "$QS_NEGATIVE_TIME" $[QS_TIME_IN_SECONDS / 60] $[QS_TIME_IN_SECONDS % 60]
 }
 
 qs_generate_segment_row_rank_class() {
@@ -327,7 +340,7 @@ qs_generate_segment_row_rank_class() {
 qs_generate_segment_delta_flames() {
 	local QS_SEGMENT_CR_DELTA=$1
 
-	if [ "$QS_SEGMENT_CR_DELTA" -eq 0 ]; then
+	if [ "$QS_SEGMENT_CR_DELTA" -le 0 ]; then
 		echo ""
 	elif [ "$QS_SEGMENT_CR_DELTA" -le 5 ]; then
 		echo "🔥🔥🔥"
@@ -341,7 +354,7 @@ qs_generate_segment_delta_flames() {
 qs_generate_segment_delta_percentage_flames() {
 	local QS_SEGMENT_CR_DELTA_PERCENTAGE=$1
 
-	if [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -eq 0 ]; then
+	if [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le 0 ]; then
 		echo ""
 	elif [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le 500 ]; then
 		echo "🔥🔥🔥"
