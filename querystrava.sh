@@ -178,6 +178,7 @@ qs_build_segments_board_from_ids() {
 		<script type=\"text/javascript\" src=\"https://cdn.jsdelivr.net/gh/christianbach/tablesorter@07e0918254df3c2057d6d8e4653a0769f1881412/jquery-latest.js\"></script>
 		<script type=\"text/javascript\" src=\"https://cdn.jsdelivr.net/gh/christianbach/tablesorter@07e0918254df3c2057d6d8e4653a0769f1881412/jquery.tablesorter.js\"></script>
 		<script type=\"text/javascript\" src=\"https://cdn.jsdelivr.net/gh/christianbach/tablesorter@07e0918254df3c2057d6d8e4653a0769f1881412/jquery.metadata.js\"></script>
+
 		<script type=\"text/javascript\">
 			$.tablesorter.addParser({ 
 				// set a unique id 
@@ -217,6 +218,17 @@ qs_build_segments_board_from_ids() {
 			}); 
 
 			\$(document).ready(() => \$('.tablesorter').tablesorter({ widgets: ['zebra'] }));
+		</script>
+
+		<script type=\"text/javascript\">
+			function openSegmentIframe(nameColumn) {
+				var currentRow = \$(nameColumn).closest('tr');
+				currentRow.after(\$(\`
+							<tr>
+								<td><a href=\"#\" onclick=\"\$(this).closest('tr').remove(); return false\">X Close</a></td>
+								<td colspan=\"99\"><iframe height=\"405\" width=\"800\" frameborder=\"0\" allowtransparency=\"true\" scrolling=\"no\" src=\"https://www.strava.com/segments/\${currentRow.attr('id')}/embed\"></iframe></td>
+							</tr>\`));
+			}
 		</script>
 
 		<base target=\"_blank\" />
@@ -266,9 +278,9 @@ qs_build_segments_board_from_ids() {
 		local QS_SEGMENT_ATHLETE_RANK_IMPRESSIVENESS=$(bc <<< "scale=4; (1 - (${QS_SEGMENT_ATHLETE_RANK} / ${QS_SEGMENT_ENTRIES})) * 100")
 
 		echo "
-			  <tr class=\"$(qs_generate_segment_row_rank_class $QS_SEGMENT_ATHLETE_RANK)\">
+			  <tr id=\"${segmentId}\" class=\"$(qs_generate_segment_row_rank_class $QS_SEGMENT_ATHLETE_RANK)\">
 			   <td><a href=\"${QS_SEGMENT_URL}\">${segmentId}</a></td>
-			   <td><span class=\"crown\">👑 </span><a href=\"${QS_SEGMENT_URL}\">$(jq -r '.name' <<< $QS_SEGMENT)</a></td>
+			   <td><span class=\"crown\">👑 </span><a href=\"#\" onclick=\"openSegmentIframe(this); return false\">$(jq -r '.name' <<< $QS_SEGMENT)</a></td>
 			   <td>${QS_SEGMENT_ATHLETE_RANK} / ${QS_SEGMENT_ENTRIES}</td>
 			   <td>$(printf "%.2f" ${QS_SEGMENT_ATHLETE_RANK_IMPRESSIVENESS})</td>
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_CR)</td>
