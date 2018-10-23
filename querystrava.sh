@@ -304,6 +304,7 @@ qs_build_segments_board_from_ids() {
 		 <tbody>
 	" >> ~/.querystrava/segments.html
 
+	local QS_CROWN_TOTAL=0;
 	while read -r segmentId; do
 		[[ -z $segmentId ]] && continue
 
@@ -325,6 +326,8 @@ qs_build_segments_board_from_ids() {
 
 		local QS_SEGMENT_CR_DELTA=$[QS_SEGMENT_PR - QS_SEGMENT_CR]
 		if [ $QS_SEGMENT_ATHLETE_RANK -eq 1 ]; then
+			QS_CROWN_TOTAL=$[QS_CROWN_TOTAL + 1]
+
 			local QS_SEGMENT_RUNNERUP_TIME=$(jq "map(select(.rank == 2)) | .[0].elapsed_time" <<< $QS_SEGMENT_LEADERBOARD_ENTRIES)
 			local QS_SEGMENT_CR_DELTA=$[QS_SEGMENT_CR - QS_SEGMENT_RUNNERUP_TIME]
 		fi
@@ -353,6 +356,9 @@ qs_build_segments_board_from_ids() {
 	echo "
 		 </tbody>
 		</table>
+		<script type=\"text/javascript\">
+			\$('head').append(\$('<title>👑 ${QS_CROWN_TOTAL} 👑</title>'));
+		</script>
 	   </body>
 	" >> ~/.querystrava/segments.html
 
