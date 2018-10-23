@@ -261,8 +261,8 @@ qs_build_segments_board_from_ids() {
 		[[ -z $segmentId ]] && continue
 		echo "Processing segment ${segmentId}"
 
-		local QS_SEGMENT=$(qs_query_segment $segmentId &)
-		local QS_SEGMENT_LEADERBOARD=$(qs_query_segment_leaderboard $segmentId &)
+		local QS_SEGMENT=$(qs_query_segment $segmentId)
+		local QS_SEGMENT_LEADERBOARD=$(qs_query_segment_leaderboard $segmentId)
 
 		local QS_SEGMENT_LEADERBOARD_ENTRIES=$(jq '.entries' <<< $QS_SEGMENT_LEADERBOARD)
 		[[ "null" == "$QS_SEGMENT_LEADERBOARD_ENTRIES" ]] && echo "Error retrieving segment ${segmentId} leaderboard" && continue
