@@ -243,6 +243,7 @@ qs_build_segments_board_from_ids() {
 		<base target=\"_blank\" />
 	   </head>
 	   <body>
+	    <h2 id=\"crownCount\">Crown count: </h2>
 		<table class=\"tablesorter { sortlist: [[2,0]] }\">
 		 <thead>
 		  <tr>
@@ -264,6 +265,7 @@ qs_build_segments_board_from_ids() {
 		 <tbody>
 	" >> ~/.querystrava/segments.html
 
+	local QS_SEGMENT_CR_COUNT=0
 	while read -r segmentId; do
 		[[ -z $segmentId ]] && continue
 		echo "Processing segment ${segmentId}"
@@ -286,6 +288,7 @@ qs_build_segments_board_from_ids() {
 
 		local QS_SEGMENT_CR_DELTA=$[QS_SEGMENT_PR - QS_SEGMENT_CR]
 		if [ $QS_SEGMENT_ATHLETE_RANK -eq 1 ]; then
+			QS_SEGMENT_CR_COUNT=$[QS_SEGMENT_CR_COUNT + 1]
 			local QS_SEGMENT_RUNNERUP_TIME=$(jq "map(select(.rank == 2)) | .[0].elapsed_time" <<< $QS_SEGMENT_LEADERBOARD_ENTRIES)
 			local QS_SEGMENT_CR_DELTA=$[QS_SEGMENT_CR - QS_SEGMENT_RUNNERUP_TIME]
 		fi
@@ -314,6 +317,14 @@ qs_build_segments_board_from_ids() {
 	echo "
 		 </tbody>
 		</table>
+		<script type=\"text/javascript\">
+			var crownCountHeader = \$('h2#crownCount');
+			crownCountHeader.append(${QS_SEGMENT_CR_COUNT});
+
+			var crowns = \$('<h1>');
+			crowns.append('👑'.repeat(${QS_SEGMENT_CR_COUNT}));
+			crownCountHeader.before(crowns);
+		</script>
 	   </body>
 	" >> ~/.querystrava/segments.html
 
