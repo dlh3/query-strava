@@ -52,7 +52,11 @@ In general, usage begins with a query function, which is piped to filters/getter
 # Query for up to 50 (default 2, max 200) starred segments
 #  filter out segments with no personal efforts
 #   then build and open the HTML table
-$ qs_query_segments_starred 50 | qs_filter_segments_with_efforts | qs_build_segment_board
+$ qs_query_segments_starred 50 | qs_filter_segments_with_efforts | qs_build_segment_board_from_segments
+
+# Lookup all activities and extract all discovered segments
+#  then build and open the HTML table
+$ qs_query_discovered_segments | qs_build_segments_board_from_ids
 ```
 
 ![Segment Board](https://github.com/dlh3/query-strava/raw/master/images/segment_board.png "Segment Board")

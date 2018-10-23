@@ -122,6 +122,44 @@ qs_query_segment_leaderboard() {
 	qs_query_strava "/segments/${QS_SEGMENT_ID}/leaderboard"
 }
 
+qs_query_activity() {
+	local QS_ACTIVITY_ID=$1
+
+	qs_query_strava "/activities/${QS_ACTIVITY_ID}?include_all_efforts=true"
+}
+
+qs_query_activity_ids() {
+	local QS_CURRENT_PAGE=1
+	local QS_RESULTS_PER_PAGE=30
+	local QS_PAGE_RESULTS_NUM=-1
+	local QS_ACTIVITY_IDS=()
+
+	while [ "$QS_PAGE_RESULTS_NUM" -ne 0 ]; do
+		local QS_ACTIVITIES=$(qs_query_strava "/athlete/activities?per_page=${QS_RESULTS_PER_PAGE}&page=${QS_CURRENT_PAGE}")
+		QS_ACTIVITY_IDS+=($(jq '.[].id' <<< $QS_ACTIVITIES))
+
+		QS_PAGE_RESULTS_NUM=$(jq 'length' <<< $QS_ACTIVITIES)
+		QS_CURRENT_PAGE=$[QS_CURRENT_PAGE + 1]
+	done
+
+	qs_log "Retrieved activity IDs: \n${QS_ACTIVITY_IDS[@]}"
+	tr ' ' '\n' <<< ${QS_ACTIVITY_IDS[@]}
+}
+
+qs_query_discovered_segments() {
+	local QS_SEGMENT_IDS=()
+
+	while read -r activityId; do
+		local QS_ACTIVITY=$(qs_query_activity $activityId)
+		QS_SEGMENT_IDS+=($(jq '.segment_efforts[].segment.id' <<< $QS_ACTIVITY))
+
+		local QS_SEGMENT_EFFORTS_COUNT=$(jq '.segment_efforts | length' <<< $QS_ACTIVITY)
+		qs_log "Segment efforts for activity ${activityId}: $QS_SEGMENT_EFFORTS_COUNT"
+	done <<< $(qs_query_activity_ids)
+
+	tr ' ' '\n' <<< ${QS_SEGMENT_IDS[@]} | sort -u
+}
+
 
 ### FILTERS
 qs_filter_segments_with_efforts() {
@@ -130,16 +168,10 @@ qs_filter_segments_with_efforts() {
 
 
 ### PROCESSORS
-qs_build_segment_board() {
+qs_build_segment_board_from_segments() {
 	local QS_SEGMENTS_INPUT=$(jq '.')
 
 	jq '.[].id' <<< $QS_SEGMENTS_INPUT | qs_build_segments_board_from_ids
-}
-
-qs_build_discovered_segments_board() {
-	local QS_SEGMENT_IDS_FILE=${1:-~/.querystrava/discovered_segments.uniq.lst}
-	# WIP: Refers to a file as an interim solution while testing refactored qs_build_segment_board/qs_build_segments_board_from_ids
-	cat $QS_SEGMENT_IDS_FILE | qs_build_segments_board_from_ids
 }
 
 qs_build_segments_board_from_ids() {
@@ -274,13 +306,12 @@ qs_build_segments_board_from_ids() {
 
 	while read -r segmentId; do
 		[[ -z $segmentId ]] && continue
-		echo "Processing segment ${segmentId}"
 
 		local QS_SEGMENT=$(qs_query_segment $segmentId)
 		local QS_SEGMENT_LEADERBOARD=$(qs_query_segment_leaderboard $segmentId)
 
 		local QS_SEGMENT_LEADERBOARD_ENTRIES=$(jq '.entries' <<< $QS_SEGMENT_LEADERBOARD)
-		[[ "null" == "$QS_SEGMENT_LEADERBOARD_ENTRIES" ]] && echo "Error retrieving segment ${segmentId} leaderboard" && continue
+		[[ "null" == "$QS_SEGMENT_LEADERBOARD_ENTRIES" ]] && qs_log "Error retrieving segment ${segmentId} leaderboard" && continue
 
 		local QS_SEGMENT_URL="https://www.strava.com/segments/${segmentId}"
 		local QS_SEGMENT_ENTRIES=$(jq '.entry_count' <<< $QS_SEGMENT_LEADERBOARD)
