@@ -129,8 +129,9 @@ qs_build_segment_board() {
 }
 
 qs_build_discovered_segments_board() {
+	local QS_SEGMENT_IDS_FILE=${1:-~/.querystrava/discovered_segments.uniq.lst}
 	# WIP: Refers to a file as an interim solution while testing refactored qs_build_segment_board/qs_build_segments_board_from_ids
-	cat ~/.querystrava/discovered_segments.uniq.lst | qs_build_segments_board_from_ids
+	cat $QS_SEGMENT_IDS_FILE | qs_build_segments_board_from_ids
 }
 
 qs_build_segments_board_from_ids() {
