@@ -223,13 +223,19 @@ qs_build_segments_board_from_ids() {
 		</script>
 
 		<script type=\"text/javascript\">
-			function openSegmentIframe(nameColumn) {
-				var currentRow = \$(nameColumn).closest('tr');
-				currentRow.after(\$(\`
-							<tr>
-								<td><a href=\"#\" onclick=\"\$(this).closest('tr').remove(); return false\">X Close</a></td>
-								<td colspan=\"99\"><iframe height=\"405\" width=\"800\" frameborder=\"0\" allowtransparency=\"true\" scrolling=\"no\" src=\"https://www.strava.com/segments/\${currentRow.attr('id')}/embed\"></iframe></td>
-							</tr>\`));
+			function toggleSegmentIframe(segmentId) {
+				var currentRow = \$('#' + segmentId);
+				var iframeRow = \$('#iframe-' + segmentId);
+
+				if (iframeRow.length) {
+					iframeRow[0].remove();
+				} else {
+					iframeRow = \$('<tr id=\"iframe-' + segmentId + '\">');
+					iframeRow.append(\$('<td onclick=\"toggleSegmentIframe(' + segmentId + ')\">X Close</td>'));
+					iframeRow.append(\$('<td colspan=\"99\"><iframe height=\"405\" width=\"800\" frameborder=\"0\" allowtransparency=\"true\" scrolling=\"no\" src=\"https://www.strava.com/segments/' + segmentId + '/embed\"></iframe></td>'));
+
+					currentRow.after(iframeRow);
+				}
 			}
 		</script>
 
@@ -240,7 +246,7 @@ qs_build_segments_board_from_ids() {
 		 <thead>
 		  <tr>
 		   <th>ID</th>
-		   <th>Name</th>
+		   <th>Name (click to expand leaderboard)</th>
 		   <th class=\"{ sorter: 'chopSpace' }\">Rank</th>
 		   <th>Impressiveness</th>
 		   <th class=\"{ sorter: 'timestamp' }\">CR Time (MM:SS)</th>
@@ -287,7 +293,7 @@ qs_build_segments_board_from_ids() {
 		echo "
 			  <tr id=\"${segmentId}\" class=\"$(qs_generate_segment_row_rank_class $QS_SEGMENT_ATHLETE_RANK)\">
 			   <td><a href=\"${QS_SEGMENT_URL}\">${segmentId}</a></td>
-			   <td><span class=\"crown\">👑 </span><a href=\"#\" onclick=\"openSegmentIframe(this); return false\">$(jq -r '.name' <<< $QS_SEGMENT)</a></td>
+			   <td onclick=\"toggleSegmentIframe(${segmentId})\"><span class=\"crown\">👑 </span>$(jq -r '.name' <<< $QS_SEGMENT)</td>
 			   <td>${QS_SEGMENT_ATHLETE_RANK} / ${QS_SEGMENT_ENTRIES}</td>
 			   <td>$(printf "%.2f" ${QS_SEGMENT_ATHLETE_RANK_IMPRESSIVENESS})</td>
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_CR)</td>
