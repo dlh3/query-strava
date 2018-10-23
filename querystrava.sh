@@ -30,6 +30,10 @@ qs_curl() {
 	curl -s -X "${QS_QUERY_METHOD}" "${QS_QUERY_URL}" -H "Authorization: Bearer ${QS_AUTH_TOKEN}"
 }
 
+qs_log() {
+	echo -e "INFO: $1" 1>&2
+}
+
 
 ### AUTH
 qs_auth() {
@@ -76,6 +80,8 @@ qs_auth() {
 
 qs_touch_auth() {
 	if [[ `date +%s` -gt $[QS_AUTH_TOKEN_EXPIRY - 3600] ]]; then
+		qs_log "Refreshing auth token"
+
 		local QS_AUTH_RESPONSE=$(qs_curl POST "https://www.strava.com/oauth/token?client_id=${QS_CLIENT_ID}&client_secret=${QS_CLIENT_SECRET}&refresh_token=${QS_REFRESH_TOKEN}&grant_type=refresh_token")
 
 		QS_AUTH_TOKEN=$(jq -r '.access_token' <<< $QS_AUTH_RESPONSE)
@@ -92,6 +98,8 @@ qs_query_strava() {
 	local QS_QUERY_BASE_URL='https://www.strava.com/api/v3'
 
 	qs_touch_auth
+
+	qs_log "${QS_QUERY_METHOD} ${QS_QUERY_BASE_URL}${QS_QUERY_URI}"
 	local QS_RESPONSE=$(qs_curl "${QS_QUERY_METHOD}" "${QS_QUERY_BASE_URL}${QS_QUERY_URI}")
 	jq '.' <<< $QS_RESPONSE
 }
