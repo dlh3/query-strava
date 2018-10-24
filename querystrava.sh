@@ -10,7 +10,7 @@ QS_AUTH_CALLBACK_PORT=5744
 QS_CLIENT_ID=$QS_CLIENT_ID
 QS_CLIENT_SECRET=$QS_CLIENT_SECRET
 QS_AUTH_TOKEN=$QS_AUTH_TOKEN
-QS_REFRESH_TOKEN=$QS_REFRESH_TOKEN
+QS_AUTH_REFRESH_TOKEN=$QS_AUTH_REFRESH_TOKEN
 QS_AUTH_TOKEN_EXPIRY=$QS_AUTH_TOKEN_EXPIRY
 
 
@@ -67,15 +67,13 @@ qs_auth() {
 	echo "Received callback: ${QS_AUTH_CALLBACK_REQUEST}"
 	echo
 
-
 	local QS_AUTH_RESPONSE=$(qs_curl POST "https://www.strava.com/oauth/token?client_id=${QS_CLIENT_ID}&client_secret=${QS_CLIENT_SECRET}&code=${QS_AUTH_CODE}&grant_type=authorization_code")
-
 	QS_AUTH_TOKEN=$(jq -r '.access_token' <<< $QS_AUTH_RESPONSE)
-	QS_REFRESH_TOKEN=$(jq -r '.refresh_token' <<< $QS_AUTH_RESPONSE)
+	QS_AUTH_REFRESH_TOKEN=$(jq -r '.refresh_token' <<< $QS_AUTH_RESPONSE)
 	QS_AUTH_TOKEN_EXPIRY=$(jq -r '.expires_at' <<< $QS_AUTH_RESPONSE)
 
 	echo "Auth token: ${QS_AUTH_TOKEN}"
-	echo "Refresh token: ${QS_REFRESH_TOKEN}"
+	echo "Refresh token: ${QS_AUTH_REFRESH_TOKEN}"
 	echo "Token expires: $(date -r ${QS_AUTH_TOKEN_EXPIRY})"
 }
 
@@ -83,10 +81,9 @@ qs_touch_auth() {
 	if [[ `date +%s` -gt $[QS_AUTH_TOKEN_EXPIRY - 3600] ]]; then
 		qs_log "Refreshing auth token"
 
-		local QS_AUTH_RESPONSE=$(qs_curl POST "https://www.strava.com/oauth/token?client_id=${QS_CLIENT_ID}&client_secret=${QS_CLIENT_SECRET}&refresh_token=${QS_REFRESH_TOKEN}&grant_type=refresh_token")
-
+		local QS_AUTH_RESPONSE=$(qs_curl POST "https://www.strava.com/oauth/token?client_id=${QS_CLIENT_ID}&client_secret=${QS_CLIENT_SECRET}&refresh_token=${QS_AUTH_REFRESH_TOKEN}&grant_type=refresh_token")
 		QS_AUTH_TOKEN=$(jq -r '.access_token' <<< $QS_AUTH_RESPONSE)
-		QS_REFRESH_TOKEN=$(jq -r '.refresh_token' <<< $QS_AUTH_RESPONSE)
+		QS_AUTH_REFRESH_TOKEN=$(jq -r '.refresh_token' <<< $QS_AUTH_RESPONSE)
 		QS_AUTH_TOKEN_EXPIRY=$(jq -r '.expires_at' <<< $QS_AUTH_RESPONSE)
 	fi
 }
