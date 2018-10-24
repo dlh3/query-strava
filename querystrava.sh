@@ -27,6 +27,7 @@ qs_curl() {
 	local QS_QUERY_METHOD=$1
 	local QS_QUERY_URL=$2
 
+	qs_log "${QS_QUERY_METHOD} ${QS_QUERY_URL}"
 	curl -s -X "${QS_QUERY_METHOD}" "${QS_QUERY_URL}" -H "Authorization: Bearer ${QS_AUTH_TOKEN}"
 }
 
@@ -98,8 +99,6 @@ qs_query_strava() {
 	local QS_QUERY_BASE_URL='https://www.strava.com/api/v3'
 
 	qs_touch_auth
-
-	qs_log "${QS_QUERY_METHOD} ${QS_QUERY_BASE_URL}${QS_QUERY_URI}"
 	local QS_RESPONSE=$(qs_curl "${QS_QUERY_METHOD}" "${QS_QUERY_BASE_URL}${QS_QUERY_URI}")
 	jq '.' <<< $QS_RESPONSE
 }
@@ -142,7 +141,6 @@ qs_query_activity_ids() {
 		QS_CURRENT_PAGE=$[QS_CURRENT_PAGE + 1]
 	done
 
-	qs_log "Retrieved activity IDs: \n${QS_ACTIVITY_IDS[@]}"
 	tr ' ' '\n' <<< ${QS_ACTIVITY_IDS[@]}
 }
 
