@@ -2,6 +2,22 @@
 
 ### INITIALIZERS
 mkdir ~/.querystrava &> /dev/null
+rm ~/.querystrava/querystrava.log &> /dev/null
+touch ~/.querystrava/setauth.sh
+
+OIFS="$IFS"
+IFS=' '
+
+
+### LOGGING
+QS_LOG_LEVEL_TRACE=0
+QS_LOG_LEVEL_DEBUG=1
+QS_LOG_LEVEL_INFO=2
+QS_LOG_LEVEL_WARN=3
+QS_LOG_LEVEL_ERROR=4
+QS_LOG_LEVEL_NAMES=(TRACE DEBUG INFO WARN ERROR)
+
+QS_LOG_LEVEL=$QS_LOG_LEVEL_INFO
 
 
 ### FIELDS
@@ -27,12 +43,16 @@ qs_curl() {
 	local QS_QUERY_METHOD=$1
 	local QS_QUERY_URL=$2
 
-	qs_log "${QS_QUERY_METHOD} ${QS_QUERY_URL}"
-	curl -s -X "${QS_QUERY_METHOD}" "${QS_QUERY_URL}" -H "Authorization: Bearer ${QS_AUTH_TOKEN}"
+	qs_log "${QS_QUERY_METHOD} ${QS_QUERY_URL}" $QS_LOG_LEVEL_DEBUG
+	curl -s -X "${QS_QUERY_METHOD}" "${QS_QUERY_URL}" -H "Authorization: Bearer ${QS_AUTH_TOKEN}" | jq . | tee -a ~/.querystrava/querystrava.log
 }
 
 qs_log() {
-	echo -e "INFO: $1" 1>&2
+	local QS_LOG_STATEMENT_LEVEL=${2:-$QS_LOG_LEVEL_INFO}
+
+	if [[ $QS_LOG_STATEMENT_LEVEL -ge $QS_LOG_LEVEL ]]; then
+		echo -e "${QS_LOG_LEVEL_NAMES[$QS_LOG_STATEMENT_LEVEL]}: $1" | tee -a ~/.querystrava/querystrava.log 1>&2
+	fi
 }
 
 
@@ -67,25 +87,30 @@ qs_auth() {
 	echo "Received callback: ${QS_AUTH_CALLBACK_REQUEST}"
 	echo
 
-	local QS_AUTH_RESPONSE=$(qs_curl POST "https://www.strava.com/oauth/token?client_id=${QS_CLIENT_ID}&client_secret=${QS_CLIENT_SECRET}&code=${QS_AUTH_CODE}&grant_type=authorization_code")
+	qs_set_auth <<< "$(qs_curl POST "https://www.strava.com/oauth/token?client_id=${QS_CLIENT_ID}&client_secret=${QS_CLIENT_SECRET}&code=${QS_AUTH_CODE}&grant_type=authorization_code")"
+}
+
+qs_touch_auth() {
+	. ~/.querystrava/setauth.sh
+	if [[ `date +%s` > $[QS_AUTH_TOKEN_EXPIRY - 3600] ]]; then
+		qs_log "Refreshing auth token"
+
+		qs_set_auth <<< "$(qs_curl POST "https://www.strava.com/oauth/token?client_id=${QS_CLIENT_ID}&client_secret=${QS_CLIENT_SECRET}&refresh_token=${QS_AUTH_REFRESH_TOKEN}&grant_type=refresh_token")"
+	fi
+}
+
+qs_set_auth() {
+	local QS_AUTH_RESPONSE="$(</dev/stdin)"
+
 	QS_AUTH_TOKEN=$(jq -r '.access_token' <<< $QS_AUTH_RESPONSE)
 	QS_AUTH_REFRESH_TOKEN=$(jq -r '.refresh_token' <<< $QS_AUTH_RESPONSE)
 	QS_AUTH_TOKEN_EXPIRY=$(jq -r '.expires_at' <<< $QS_AUTH_RESPONSE)
 
-	echo "Auth token: ${QS_AUTH_TOKEN}"
-	echo "Refresh token: ${QS_AUTH_REFRESH_TOKEN}"
-	echo "Token expires: $(date -r ${QS_AUTH_TOKEN_EXPIRY})"
-}
-
-qs_touch_auth() {
-	if [[ `date +%s` > $[QS_AUTH_TOKEN_EXPIRY - 3600] ]]; then
-		qs_log "Refreshing auth token"
-
-		local QS_AUTH_RESPONSE=$(qs_curl POST "https://www.strava.com/oauth/token?client_id=${QS_CLIENT_ID}&client_secret=${QS_CLIENT_SECRET}&refresh_token=${QS_AUTH_REFRESH_TOKEN}&grant_type=refresh_token")
-		QS_AUTH_TOKEN=$(jq -r '.access_token' <<< $QS_AUTH_RESPONSE)
-		QS_AUTH_REFRESH_TOKEN=$(jq -r '.refresh_token' <<< $QS_AUTH_RESPONSE)
-		QS_AUTH_TOKEN_EXPIRY=$(jq -r '.expires_at' <<< $QS_AUTH_RESPONSE)
-	fi
+	echo "
+	QS_AUTH_TOKEN=${QS_AUTH_TOKEN}
+	QS_AUTH_REFRESH_TOKEN=${QS_AUTH_REFRESH_TOKEN}
+	QS_AUTH_TOKEN_EXPIRY=${QS_AUTH_TOKEN_EXPIRY}
+	" | tee ~/.querystrava/setauth.sh
 }
 
 
