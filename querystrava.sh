@@ -78,7 +78,7 @@ qs_auth() {
 }
 
 qs_touch_auth() {
-	if [[ `date +%s` -gt $[QS_AUTH_TOKEN_EXPIRY - 3600] ]]; then
+	if [[ `date +%s` > $[QS_AUTH_TOKEN_EXPIRY - 3600] ]]; then
 		qs_log "Refreshing auth token"
 
 		local QS_AUTH_RESPONSE=$(qs_curl POST "https://www.strava.com/oauth/token?client_id=${QS_CLIENT_ID}&client_secret=${QS_CLIENT_SECRET}&refresh_token=${QS_AUTH_REFRESH_TOKEN}&grant_type=refresh_token")
