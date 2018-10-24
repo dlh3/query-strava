@@ -155,6 +155,7 @@ qs_query_activity_ids() {
 	local QS_PAGE_RESULTS_NUM=-1
 	local QS_ACTIVITY_IDS=()
 
+	qs_log "Retrieving activities for current user"
 	while [ "$QS_PAGE_RESULTS_NUM" -ne 0 ]; do
 		local QS_ACTIVITIES=$(qs_query_strava "/athlete/activities?per_page=${QS_RESULTS_PER_PAGE}&page=${QS_CURRENT_PAGE}")
 		QS_ACTIVITY_IDS+=($(jq '.[].id' <<< $QS_ACTIVITIES))
@@ -162,8 +163,9 @@ qs_query_activity_ids() {
 		QS_PAGE_RESULTS_NUM=$(jq 'length' <<< $QS_ACTIVITIES)
 		QS_CURRENT_PAGE=$[QS_CURRENT_PAGE + 1]
 	done
+	qs_log "Collected $(tr ' ' '\n' <<< $QS_ACTIVITY_IDS[@] | wc -l | xargs) activities"
 
-	tr ' ' '\n' <<< ${QS_ACTIVITY_IDS[@]}
+	echo "${QS_ACTIVITY_IDS[@]}"
 }
 
 qs_query_discovered_segments() {
@@ -174,10 +176,12 @@ qs_query_discovered_segments() {
 		QS_SEGMENT_IDS+=($(jq '.segment_efforts[].segment.id' <<< $QS_ACTIVITY))
 
 		local QS_SEGMENT_EFFORTS_COUNT=$(jq '.segment_efforts | length' <<< $QS_ACTIVITY)
-		qs_log "Segment efforts for activity ${activityId}: $QS_SEGMENT_EFFORTS_COUNT"
+		qs_log "Collected ${QS_SEGMENT_EFFORTS_COUNT} segment efforts for activity ${activityId}"
 	done <<< $(qs_query_activity_ids)
 
-	tr ' ' '\n' <<< ${QS_SEGMENT_IDS[@]} | sort -u
+	local QS_SEGMENT_IDS_UNIQ=$(tr ' ' '\n' <<< ${QS_SEGMENT_IDS[@]} | sort -u)
+	qs_log "Collected $(wc -l <<< $QS_SEGMENT_IDS_UNIQ | xargs) unique discovered segments"
+	echo "$QS_SEGMENT_IDS_UNIQ"
 }
 
 
@@ -352,8 +356,9 @@ qs_build_segments_board_from_ids() {
 
 	local QS_CROWN_TOTAL=0;
 	while read -r segmentId; do
- 		[[ -z $segmentId ]] && continue
 		unset "${!QS_SEGMENT@}"
+		[[ -z $segmentId ]] && continue
+		qs_log "Processing segment ${segmentId}"
 
 		local QS_SEGMENT=$(qs_query_segment $segmentId)
 		local QS_SEGMENT_LEADERBOARD=$(qs_query_segment_leaderboard $segmentId)
