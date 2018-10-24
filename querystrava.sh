@@ -173,22 +173,12 @@ qs_build_segment_board_from_segments() {
 }
 
 qs_build_segments_board_from_ids() {
-	local QS_SEGMENT_IDS=$(</dev/stdin)
-
 	echo > ~/.querystrava/segments.html
 	echo "
 	   <html>
 	   <head>
 		<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/gh/christianbach/tablesorter@07e0918254df3c2057d6d8e4653a0769f1881412/themes/blue/style.css\" />
 		<style>
-			tr span.crown {
-				visibility: hidden;
-			}
-
-			tr.king span.crown {
-				visibility: visible;
-			}
-
 			table.tablesorter tbody tr.king.odd td {
 				background-color: limegreen;
 			}
@@ -219,44 +209,62 @@ qs_build_segments_board_from_ids() {
 		<script type=\"text/javascript\" src=\"https://cdn.jsdelivr.net/gh/christianbach/tablesorter@07e0918254df3c2057d6d8e4653a0769f1881412/jquery.metadata.js\"></script>
 
 		<script type=\"text/javascript\">
-			$.tablesorter.addParser({ 
-				// set a unique id 
-				id: 'chopSpace', 
+			$.tablesorter.addParser({
+				// set a unique id
+				id: 'stringLength',
 
-				// return false so this parser is not auto detected 
-				is: function(s) { 
-					return false; 
-				}, 
+				// return false so this parser is not auto detected
+				is: function(s) {
+					return false;
+				},
 
-				// format your data for normalization 
-				format: function(s) { 
+				// format your data for normalization
+				format: function(s) {
+					return s.length;
+				},
+
+				// set type, either numeric or text
+				type: 'text'
+			});
+
+			$.tablesorter.addParser({
+				// set a unique id
+				id: 'chopSpace',
+
+				// return false so this parser is not auto detected
+				is: function(s) {
+					return false;
+				},
+
+				// format your data for normalization
+				format: function(s) {
 					return s.replace(/ .*$/, '');
-				}, 
+				},
 
-				// set type, either numeric or text 
-				type: 'numeric' 
-			}); 
+				// set type, either numeric or text
+				type: 'numeric'
+			});
 
-			$.tablesorter.addParser({ 
-				// set a unique id 
-				id: 'timestamp', 
+			$.tablesorter.addParser({
+				// set a unique id
+				id: 'timestamp',
 
-				// return false so this parser is not auto detected 
-				is: function(s) { 
-					return false; 
-				}, 
+				// return false so this parser is not auto detected
+				is: function(s) {
+					return false;
+				},
 
-				// format your data for normalization 
-				format: function(s) { 
+				// format your data for normalization
+				format: function(s) {
 					var multiplier = s.startsWith('-') ? -1 : 1;
 
 					var parts = s.replace(/ .*$/, '').split(':');
 					return multiplier * ((Math.abs(parts[0]) * 60) + parts[1]);
-				}, 
+				},
 
-				// set type, either numeric or text 
-				type: 'numeric' 
-			}); 
+				// set type, either numeric or text
+				type: 'numeric'
+			});
 
 			\$(document).ready(() => \$('.tablesorter').tablesorter({ widgets: ['zebra'] }));
 		</script>
@@ -281,10 +289,11 @@ qs_build_segments_board_from_ids() {
 		<base target=\"_blank\" />
 	   </head>
 	   <body>
-		<table class=\"tablesorter { sortlist: [[2,0]] }\">
+		<table class=\"tablesorter { sortlist: [[3,0]] }\">
 		 <thead>
 		  <tr>
 		   <th>ID</th>
+		   <th class=\"{ sorter: 'stringLength' }\">⭐</th>
 		   <th>Name (click to expand leaderboard)</th>
 		   <th class=\"{ sorter: 'chopSpace' }\">Rank</th>
 		   <th>Impressiveness</th>
@@ -304,7 +313,8 @@ qs_build_segments_board_from_ids() {
 
 	local QS_CROWN_TOTAL=0;
 	while read -r segmentId; do
-		[[ -z $segmentId ]] && continue
+ 		[[ -z $segmentId ]] && continue
+		unset "${!QS_SEGMENT@}"
 
 		local QS_SEGMENT=$(qs_query_segment $segmentId)
 		local QS_SEGMENT_LEADERBOARD=$(qs_query_segment_leaderboard $segmentId)
@@ -313,18 +323,19 @@ qs_build_segments_board_from_ids() {
 		[[ "null" == "$QS_SEGMENT_LEADERBOARD_ENTRIES" ]] && qs_log "Error retrieving segment ${segmentId} leaderboard" && continue
 
 		local QS_SEGMENT_URL="https://www.strava.com/segments/${segmentId}"
-		local QS_SEGMENT_ENTRIES=$(jq '.entry_count' <<< $QS_SEGMENT_LEADERBOARD)
+		local QS_SEGMENT_STAR=$([[ 'true' == `jq '.starred' <<< $QS_SEGMENT` ]] && echo ❤️)
 
 		local QS_SEGMENT_CR=$(jq '.[0].elapsed_time' <<< $QS_SEGMENT_LEADERBOARD_ENTRIES)
 		local QS_SEGMENT_PR=$(jq '.athlete_segment_stats.pr_elapsed_time' <<< $QS_SEGMENT)
 
-		local QS_SEGMENT_PR_START=$(jq '.athlete_pr_effort.start_date' <<< $QS_SEGMENT)
+		local QS_SEGMENT_ENTRIES=$(jq '.entry_count' <<< $QS_SEGMENT_LEADERBOARD)
 		local QS_SEGMENT_ATHLETE_RANK=$(jq "map(select(.elapsed_time == ${QS_SEGMENT_PR})) | .[0].rank" <<< $QS_SEGMENT_LEADERBOARD_ENTRIES)
 		local QS_SEGMENT_ATHLETE_RANK_IMPRESSIVENESS=$(bc <<< "scale=4; (1 - (${QS_SEGMENT_ATHLETE_RANK} / ${QS_SEGMENT_ENTRIES})) * 100")
 
 		local QS_SEGMENT_CR_DELTA=$[QS_SEGMENT_PR - QS_SEGMENT_CR]
 		if [ $QS_SEGMENT_ATHLETE_RANK -eq 1 ]; then
 			QS_CROWN_TOTAL=$[QS_CROWN_TOTAL + 1]
+			local QS_SEGMENT_CROWN="👑"
 
 			local QS_SEGMENT_RUNNERUP_TIME=$(jq "map(select(.rank == 2)) | .[0].elapsed_time" <<< $QS_SEGMENT_LEADERBOARD_ENTRIES)
 			local QS_SEGMENT_CR_DELTA=$[QS_SEGMENT_CR - QS_SEGMENT_RUNNERUP_TIME]
@@ -334,7 +345,8 @@ qs_build_segments_board_from_ids() {
 		echo "
 			  <tr id=\"${segmentId}\" class=\"$(qs_generate_segment_row_rank_class $QS_SEGMENT_ATHLETE_RANK)\">
 			   <td><a href=\"${QS_SEGMENT_URL}\">${segmentId}</a></td>
-			   <td onclick=\"toggleSegmentIframe(${segmentId})\"><span class=\"crown\">👑 </span>$(jq -r '.name' <<< $QS_SEGMENT)</td>
+			   <td>${QS_SEGMENT_STAR}</td>
+			   <td onclick=\"toggleSegmentIframe(${segmentId})\">$(jq -r '.name' <<< $QS_SEGMENT) ${QS_SEGMENT_CROWN}</td>
 			   <td>${QS_SEGMENT_ATHLETE_RANK} / ${QS_SEGMENT_ENTRIES}</td>
 			   <td>$(printf "%.2f" ${QS_SEGMENT_ATHLETE_RANK_IMPRESSIVENESS})</td>
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_CR)</td>
@@ -349,7 +361,7 @@ qs_build_segments_board_from_ids() {
 			   <!-- $(jq '.athlete_pr_effort' <<< $QS_SEGMENT) -->
 			  </tr>
 		" >> ~/.querystrava/segments.html
-	done <<< "$QS_SEGMENT_IDS"
+	done <<< "$(</dev/stdin)"
 
 	echo "
 		 </tbody>
