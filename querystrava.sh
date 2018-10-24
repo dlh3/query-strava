@@ -174,6 +174,7 @@ qs_build_segments_board_from_ids() {
 	echo "
 	   <html>
 	   <head>
+	    <title>Building Segment Board...</title>
 		<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/gh/christianbach/tablesorter@07e0918254df3c2057d6d8e4653a0769f1881412/themes/blue/style.css\" />
 		<style>
 			table.tablesorter tbody tr.king.odd td {
@@ -283,9 +284,23 @@ qs_build_segments_board_from_ids() {
 			}
 		</script>
 
+		<script>
+			function startAutoReloadTimeout() {
+				setTimeout(() => {
+					if (!documentLoaded) {
+						document.location.reload();
+					}
+				}, 2000);
+			}
+
+			documentLoaded = false;
+			startAutoReloadTimeout();
+		</script>
+
 		<base target=\"_blank\" />
 	   </head>
 	   <body>
+	    <a id=\"autoReloadToggle\" href=\"#\" onclick=\"documentLoaded = !documentLoaded; startAutoReloadTimeout(); return false\">Toggle auto reload</a>
 		<table class=\"tablesorter { sortlist: [[3,0]] }\">
 		 <thead>
 		  <tr>
@@ -303,7 +318,6 @@ qs_build_segments_board_from_ids() {
 		   <th>Maximum Grade (%)</th>
 		   <th>Minimum Elevation (m)</th>
 		   <th>Maximum Elevation (m)</th>
-		   <!-- th>Athlete PR</th -->
 		 </thead>
 		 <tbody>
 	" >> ~/.querystrava/segments.html
@@ -355,7 +369,6 @@ qs_build_segments_board_from_ids() {
 			   <td>$(jq '.maximum_grade' <<< $QS_SEGMENT)</td>
 			   <td>$(jq '.elevation_low' <<< $QS_SEGMENT)</td>
 			   <td>$(jq '.elevation_high' <<< $QS_SEGMENT)</td>
-			   <!-- $(jq '.athlete_pr_effort' <<< $QS_SEGMENT) -->
 			  </tr>
 		" >> ~/.querystrava/segments.html
 	done <<< "$(</dev/stdin)"
@@ -364,7 +377,10 @@ qs_build_segments_board_from_ids() {
 		 </tbody>
 		</table>
 		<script type=\"text/javascript\">
-			\$('head').append(\$('<title>👑 ${QS_CROWN_TOTAL} 👑</title>'));
+			document.title = '👑 ${QS_CROWN_TOTAL} 👑';
+
+			documentLoaded = true;
+			\$('#autoReloadToggle').remove();
 		</script>
 	   </body>
 	" >> ~/.querystrava/segments.html
