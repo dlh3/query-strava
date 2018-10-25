@@ -306,7 +306,7 @@ qs_build_segments_board_from_ids() {
 		<script type=\"text/javascript\">
 			function toggleSegmentIframe(segmentId) {
 				// disable auto-reload
-				documentLoaded = true;
+				toggleAutoReload(false);
 
 				var currentRow = \$('#' + segmentId);
 				var iframeRow = \$('#iframe-' + segmentId);
@@ -324,22 +324,22 @@ qs_build_segments_board_from_ids() {
 		</script>
 
 		<script>
-			function startAutoReloadTimeout() {
+			function toggleAutoReload(enabled) {
+				autoReload = enabled;
 				setTimeout(() => {
-					if (!documentLoaded) {
+					if (autoReload) {
 						document.location.reload();
 					}
 				}, 2000);
 			}
 
-			documentLoaded = false;
-			startAutoReloadTimeout();
+			toggleAutoReload(true);
 		</script>
 
 		<base target=\"_blank\" />
 	   </head>
 	   <body>
-	    <a id=\"autoReloadToggle\" href=\"#\" onclick=\"documentLoaded = !documentLoaded; startAutoReloadTimeout(); return false\">Toggle auto reload</a>
+	    <a id=\"autoReloadToggle\" href=\"#\" onclick=\"toggleAutoReload(!autoReload); return false\">Toggle auto reload</a>
 		<table class=\"tablesorter { sortlist: [[3,0]] }\">
 		 <thead>
 		  <tr>
@@ -417,7 +417,7 @@ qs_build_segments_board_from_ids() {
 		 </tbody>
 		</table>
 		<script type=\"text/javascript\">
-			documentLoaded = true;
+			toggleAutoReload(false);
 			\$('#autoReloadToggle').remove();
 		</script>
 		<script type=\"text/javascript\">
