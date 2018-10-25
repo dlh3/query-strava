@@ -244,7 +244,7 @@ qs_build_segments_board_from_ids() {
 
 		<script type=\"text/javascript\">
 			function substringBeforeSpace(s) {
-				return s.replace(/ .*$/, '');
+				return s.replace(/ .*$/s, '');
 			}
 
 			$.tablesorter.addParser({
