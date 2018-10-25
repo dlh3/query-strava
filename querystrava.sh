@@ -243,6 +243,10 @@ qs_build_segments_board_from_ids() {
 		<script type=\"text/javascript\" src=\"https://cdn.jsdelivr.net/gh/christianbach/tablesorter@07e0918254df3c2057d6d8e4653a0769f1881412/jquery.metadata.js\"></script>
 
 		<script type=\"text/javascript\">
+			function substringBeforeSpace(s) {
+				return s.replace(/ .*$/, '');
+			}
+
 			$.tablesorter.addParser({
 				// set a unique id
 				id: 'stringLength',
@@ -263,7 +267,7 @@ qs_build_segments_board_from_ids() {
 
 			$.tablesorter.addParser({
 				// set a unique id
-				id: 'chopSpace',
+				id: 'substringBeforeSpace',
 
 				// return false so this parser is not auto detected
 				is: function(s) {
@@ -272,7 +276,7 @@ qs_build_segments_board_from_ids() {
 
 				// format your data for normalization
 				format: function(s) {
-					return s.replace(/ .*$/, '');
+					return substringBeforeSpace(s);
 				},
 
 				// set type, either numeric or text
@@ -292,8 +296,8 @@ qs_build_segments_board_from_ids() {
 				format: function(s) {
 					var multiplier = s.startsWith('-') ? -1 : 1;
 
-					var parts = s.replace(/ .*$/, '').split(':');
-					return multiplier * ((Math.abs(parts[0]) * 60) + parts[1]);
+					var parts = substringBeforeSpace(s).split(':');
+					return multiplier * ((multiplier * parts[0] * 60) + parts[1]);
 				},
 
 				// set type, either numeric or text
@@ -346,12 +350,12 @@ qs_build_segments_board_from_ids() {
 		   <th>ID</th>
 		   <th class=\"{ sorter: 'stringLength' }\">⭐</th>
 		   <th>Name (click to expand leaderboard)</th>
-		   <th class=\"{ sorter: 'chopSpace' }\">Rank</th>
+		   <th class=\"{ sorter: 'substringBeforeSpace' }\">Rank</th>
 		   <th>💪 (%)</th>
 		   <th class=\"{ sorter: 'timestamp' }\">CR Time (MM:SS)</th>
 		   <th class=\"{ sorter: 'timestamp' }\">PR Time (MM:SS)</th>
 		   <th class=\"{ sorter: 'timestamp' }\">Delta (MM:SS)</th>
-		   <th class=\"{ sorter: 'chopSpace' }\">Delta (%)</th>
+		   <th class=\"{ sorter: 'substringBeforeSpace' }\">Delta (%)</th>
 		   <th>Distance (m)</th>
 		   <th>Average Grade (%)</th>
 		   <th>Maximum Grade (%)</th>
