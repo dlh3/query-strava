@@ -140,7 +140,7 @@ qs_query_segment() {
 qs_query_segment_leaderboard() {
 	local QS_SEGMENT_ID=$1
 
-	qs_query_strava "/segments/${QS_SEGMENT_ID}/leaderboard"
+	qs_query_strava "/segments/${QS_SEGMENT_ID}/leaderboard?context_entries=0&per_page=5"
 }
 
 qs_query_activity() {
