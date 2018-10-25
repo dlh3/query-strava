@@ -209,6 +209,10 @@ qs_build_segments_board_from_ids() {
 
 		<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/gh/christianbach/tablesorter@07e0918254df3c2057d6d8e4653a0769f1881412/themes/blue/style.css\" />
 		<style>
+			span.nobreak {
+				display: block;
+			}
+
 			table.tablesorter tbody tr.king.odd td {
 				background-color: limegreen;
 			}
@@ -451,6 +455,7 @@ qs_generate_segment_row_rank_class() {
 qs_generate_segment_delta_flames() {
 	local QS_SEGMENT_CR_DELTA=$1
 
+	echo "<span class=\"nobreak flames\">"
 	if [ "$QS_SEGMENT_CR_DELTA" -le 0 ]; then
 		echo ""
 	elif [ "$QS_SEGMENT_CR_DELTA" -le 10 ]; then
@@ -460,11 +465,13 @@ qs_generate_segment_delta_flames() {
 	elif [ "$QS_SEGMENT_CR_DELTA" -le 30 ]; then
 		echo "🔥"
 	fi
+	echo "</span>"
 }
 
 qs_generate_segment_delta_percentage_flames() {
 	local QS_SEGMENT_CR_DELTA_PERCENTAGE=$1
 
+	echo "<span class=\"nobreak flames\">"
 	if [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le 0 ]; then
 		echo ""
 	elif [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le 750 ]; then
@@ -474,4 +481,5 @@ qs_generate_segment_delta_percentage_flames() {
 	elif [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le 2500 ]; then
 		echo "🔥"
 	fi
+	echo "</span>"
 }
