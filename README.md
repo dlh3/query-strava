@@ -1,5 +1,7 @@
 # QueryStrava
 
+[![Powered by Strava](https://github.com/dlh3/query-strava/raw/master/images/api_logo_pwrdBy_strava_horiz_light.png "Powered by Strava")](https://www.strava.com/)
+
 This is basic CLI support for interacting with the Strava API.  This tool was initially built to aid in constructing a personal segments board for identifying segments which you may be able to achieve the CR/KOM for.
 
 The initial version of this is pretty rough, simply being a script which is sourced into a shell to expose a collection of functions.
