@@ -51,8 +51,11 @@ qs_curl() {
 qs_log() {
 	local QS_LOG_STATEMENT_LEVEL=${2:-$QS_LOG_LEVEL_INFO}
 
+	local QS_LOG_STATEMENT="${QS_LOG_LEVEL_NAMES[$QS_LOG_STATEMENT_LEVEL]}: $1"
+	echo -e "$QS_LOG_STATEMENT" >> ~/.querystrava/querystrava.log
+
 	if [[ $QS_LOG_STATEMENT_LEVEL -ge $QS_LOG_LEVEL ]]; then
-		echo -e "${QS_LOG_LEVEL_NAMES[$QS_LOG_STATEMENT_LEVEL]}: $1" | tee -a ~/.querystrava/querystrava.log 1>&2
+		echo -e "$QS_LOG_STATEMENT" 1>&2
 	fi
 }
 
