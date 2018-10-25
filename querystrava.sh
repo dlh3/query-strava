@@ -347,7 +347,7 @@ qs_build_segments_board_from_ids() {
 		   <th class=\"{ sorter: 'stringLength' }\">⭐</th>
 		   <th>Name (click to expand leaderboard)</th>
 		   <th class=\"{ sorter: 'chopSpace' }\">Rank</th>
-		   <th>Impressiveness</th>
+		   <th>💪 (%)</th>
 		   <th class=\"{ sorter: 'timestamp' }\">CR Time (MM:SS)</th>
 		   <th class=\"{ sorter: 'timestamp' }\">PR Time (MM:SS)</th>
 		   <th class=\"{ sorter: 'timestamp' }\">Delta (MM:SS)</th>
