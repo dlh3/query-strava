@@ -76,4 +76,5 @@ TBD
 
 ## Acknowledgments
 
-* All those who came before me, and all those who follow.
+* **Curtis Muller** - *Inspiration to give Strava another shot* - [elcurto99](https://github.com/elcurto99)
+* **Chris Parsons** - *💪 and 🌭* - [cwparsons](https://github.com/cwparsons)
