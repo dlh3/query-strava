@@ -377,7 +377,7 @@ qs_build_segments_board_from_ids() {
 		local QS_SEGMENT_ATHLETE_RANK_IMPRESSIVENESS=$(bc <<< "scale=4; (1 - (${QS_SEGMENT_ATHLETE_RANK} / ${QS_SEGMENT_ENTRIES})) * 100")
 
 		local QS_SEGMENT_CR_DELTA=$[QS_SEGMENT_PR - QS_SEGMENT_CR]
-		if [ $QS_SEGMENT_ATHLETE_RANK -eq 1 ]; then
+		if [ "$QS_SEGMENT_ATHLETE_RANK" -eq 1 ]; then
 			QS_CROWN_TOTAL=$[QS_CROWN_TOTAL + 1]
 			local QS_SEGMENT_CROWN="👑"
 
@@ -450,9 +450,9 @@ qs_generate_segment_delta_flames() {
 
 	if [ "$QS_SEGMENT_CR_DELTA" -le 0 ]; then
 		echo ""
-	elif [ "$QS_SEGMENT_CR_DELTA" -le 5 ]; then
+	elif [ "$QS_SEGMENT_CR_DELTA" -le 10 ]; then
 		echo "🔥🔥🔥"
-	elif [ "$QS_SEGMENT_CR_DELTA" -le 15 ]; then
+	elif [ "$QS_SEGMENT_CR_DELTA" -le 20 ]; then
 		echo "🔥🔥"
 	elif [ "$QS_SEGMENT_CR_DELTA" -le 30 ]; then
 		echo "🔥"
@@ -464,11 +464,11 @@ qs_generate_segment_delta_percentage_flames() {
 
 	if [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le 0 ]; then
 		echo ""
-	elif [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le 500 ]; then
+	elif [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le 750 ]; then
 		echo "🔥🔥🔥"
-	elif [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le 1000 ]; then
-		echo "🔥🔥"
 	elif [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le 1500 ]; then
+		echo "🔥🔥"
+	elif [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le 2500 ]; then
 		echo "🔥"
 	fi
 }
