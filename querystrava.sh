@@ -301,6 +301,9 @@ qs_build_segments_board_from_ids() {
 
 		<script type=\"text/javascript\">
 			function toggleSegmentIframe(segmentId) {
+				// disable auto-reload
+				documentLoaded = true;
+
 				var currentRow = \$('#' + segmentId);
 				var iframeRow = \$('#iframe-' + segmentId);
 
