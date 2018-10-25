@@ -417,10 +417,28 @@ qs_build_segments_board_from_ids() {
 		 </tbody>
 		</table>
 		<script type=\"text/javascript\">
-			document.title = '👑 ${QS_CROWN_TOTAL} 👑';
-
 			documentLoaded = true;
 			\$('#autoReloadToggle').remove();
+		</script>
+		<script type=\"text/javascript\">
+			function setCrownCount(count) {
+				document.title = count + ' CRs';
+
+				var canvas = document.createElement('canvas');
+				canvas.height = 84;
+				canvas.width = 64;
+
+				var countOffset = (count < 10 ? 18 : (count < 100 ? 6 : -5));
+
+				var ctx = canvas.getContext('2d');
+				ctx.font = '50px serif';
+				ctx.fillText('👑', 7, 44);
+				ctx.fillText(count, countOffset, 84);
+
+				\$('link[rel~=\"icon\"]')[0].href = canvas.toDataURL();
+			}
+
+			setCrownCount(${QS_CROWN_TOTAL});
 		</script>
 	   </body>
 	" >> ~/.querystrava/segments.html
