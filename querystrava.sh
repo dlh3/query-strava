@@ -1,9 +1,14 @@
 #!/bin/bash
 
 ### INITIALIZERS
-mkdir ~/.querystrava &> /dev/null
 rm ~/.querystrava/querystrava.log &> /dev/null
+
+mkdir ~/.querystrava &> /dev/null
+touch ~/.querystrava/apiclient.sh
 touch ~/.querystrava/setauth.sh
+
+. ~/.querystrava/apiclient.sh
+. ~/.querystrava/setauth.sh
 
 OIFS="$IFS"
 IFS=' '
@@ -77,6 +82,11 @@ qs_auth() {
 		read -p 'Client ID: ' QS_CLIENT_ID
 		read -p 'Client secret: ' QS_CLIENT_SECRET
 		echo
+
+		echo "
+QS_CLIENT_ID=$QS_CLIENT_ID
+QS_CLIENT_SECRET=$QS_CLIENT_SECRET
+		" > ~/.querystrava/apiclient.sh
 	fi
 
 
