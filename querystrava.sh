@@ -208,7 +208,7 @@ qs_build_segment_board_from_segments() {
 	jq '.[].id' <<< $QS_SEGMENTS_INPUT | qs_build_segments_board_from_ids
 }
 
-qs_build_segments_board_from_ids() {
+qs_build_segment_board_from_ids() {
 	echo > ~/.querystrava/segments.html
 	echo "
 	   <html>

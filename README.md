@@ -58,7 +58,7 @@ $ qs_query_segments_starred 50 | qs_filter_segments_with_efforts | qs_build_segm
 
 # Lookup all activities and extract all discovered segments
 #  then build and open the HTML table
-$ qs_query_discovered_segments | qs_build_segments_board_from_ids
+$ qs_query_discovered_segments | qs_build_segment_board_from_ids
 ```
 
 ![Segment Board](https://github.com/dlh3/query-strava/raw/master/images/segment_board.png "Segment Board")
