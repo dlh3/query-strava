@@ -385,7 +385,7 @@ qs_build_segment_board_from_ids() {
 		local QS_SEGMENT_LEADERBOARD=$(qs_query_segment_leaderboard $segmentId)
 
 		local QS_SEGMENT_LEADERBOARD_ENTRIES=$(jq '.entries' <<< $QS_SEGMENT_LEADERBOARD)
-		[[ "null" == "$QS_SEGMENT_LEADERBOARD_ENTRIES" ]] && qs_log "Error retrieving segment ${segmentId} leaderboard" $QS_LOG_LEVEL_ERROR && continue
+		[[ "$QS_SEGMENT_LEADERBOARD_ENTRIES" == "null" ]] && qs_log "Error retrieving segment ${segmentId} leaderboard" $QS_LOG_LEVEL_ERROR && continue
 
 		local QS_SEGMENT_URL="https://www.strava.com/segments/${segmentId}"
 		local QS_SEGMENT_STAR=$([[ 'true' == `jq '.starred' <<< $QS_SEGMENT` ]] && echo ❤️)
@@ -399,11 +399,15 @@ qs_build_segment_board_from_ids() {
 
 		local QS_SEGMENT_CR_DELTA=$[QS_SEGMENT_PR - QS_SEGMENT_CR]
 		if [ "$QS_SEGMENT_ATHLETE_RANK" -eq 1 ]; then
-			QS_CROWN_TOTAL=$[QS_CROWN_TOTAL + 1]
+			local QS_CROWN_TOTAL=$[QS_CROWN_TOTAL + 1]
 			local QS_SEGMENT_CROWN="👑"
 
 			local QS_SEGMENT_RUNNERUP_TIME=$(jq "map(select(.rank == 2)) | .[0].elapsed_time" <<< $QS_SEGMENT_LEADERBOARD_ENTRIES)
 			local QS_SEGMENT_CR_DELTA=$[QS_SEGMENT_CR - QS_SEGMENT_RUNNERUP_TIME]
+			if [[ "$QS_SEGMENT_CR_DELTA" == "$QS_SEGMENT_CR" ]]; then
+				local QS_SEGMENT_CR_DELTA=0
+				local QS_SEGMENT_NEGATIVE_DELTA="-"
+			fi
 		fi
 		local QS_SEGMENT_CR_DELTA_PERCENTAGE=$[10000 * QS_SEGMENT_CR_DELTA / QS_SEGMENT_CR]
 
@@ -417,7 +421,7 @@ qs_build_segment_board_from_ids() {
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_CR)</td>
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_PR)</td>
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_CR_DELTA) $(qs_generate_segment_delta_flames $QS_SEGMENT_CR_DELTA)</td>
-			   <td>$(printf "%.2f" $(bc <<< "scale=2; ${QS_SEGMENT_CR_DELTA_PERCENTAGE} / 100")) $(qs_generate_segment_delta_percentage_flames $QS_SEGMENT_CR_DELTA_PERCENTAGE)</td>
+			   <td>$(printf "%s%.2f" "$QS_SEGMENT_NEGATIVE_DELTA" $(bc <<< "scale=2; ${QS_SEGMENT_CR_DELTA_PERCENTAGE} / 100")) $(qs_generate_segment_delta_percentage_flames $QS_SEGMENT_CR_DELTA_PERCENTAGE)</td>
 			   <td>$(jq '.distance' <<< $QS_SEGMENT)</td>
 			   <td>$(jq '.average_grade' <<< $QS_SEGMENT)</td>
 			   <td>$(jq '.maximum_grade' <<< $QS_SEGMENT)</td>
@@ -461,7 +465,7 @@ qs_seconds_to_timestamp() {
 	local QS_TIME_IN_SECONDS=$1
 
 	local QS_NEGATIVE_TIME=''
-	if [ "$QS_TIME_IN_SECONDS" -lt 0 ]; then
+	if [ "$QS_TIME_IN_SECONDS" -le 0 ]; then
 		QS_TIME_IN_SECONDS=$[QS_TIME_IN_SECONDS * -1]
 		QS_NEGATIVE_TIME='-'
 	fi
