@@ -504,13 +504,13 @@ qs_generate_segment_delta_flames() {
 
 	echo "<span class=\"nobreak flames\">"
 	if [ "$QS_SEGMENT_CR_DELTA" -le -30 ]; then
-		echo ""
+		echo "👌👌👌"
 	elif [ "$QS_SEGMENT_CR_DELTA" -le -20 ]; then
-		echo "🔴"
+		echo "👌👌"
 	elif [ "$QS_SEGMENT_CR_DELTA" -le -10 ]; then
-		echo "🔴🔴"
+		echo "👌"
 	elif [ "$QS_SEGMENT_CR_DELTA" -le 0 ]; then
-		echo "🔴🔴🔴"
+		echo ""
 	elif [ "$QS_SEGMENT_CR_DELTA" -le 10 ]; then
 		echo "🔥🔥🔥"
 	elif [ "$QS_SEGMENT_CR_DELTA" -le 20 ]; then
@@ -526,13 +526,13 @@ qs_generate_segment_delta_percentage_flames() {
 
 	echo "<span class=\"nobreak flames\">"
 	if [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le -2500 ]; then
-		echo ""
+		echo "👌👌👌"
 	elif [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le -1500 ]; then
-		echo "🔴"
+		echo "👌👌"
 	elif [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le -750 ]; then
-		echo "🔴🔴"
+		echo "👌"
 	elif [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le 0 ]; then
-		echo "🔴🔴🔴"
+		echo ""
 	elif [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le 750 ]; then
 		echo "🔥🔥🔥"
 	elif [ "$QS_SEGMENT_CR_DELTA_PERCENTAGE" -le 1500 ]; then
