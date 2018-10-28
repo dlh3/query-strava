@@ -20,9 +20,9 @@ QS_LOG_LEVEL_DEBUG=1
 QS_LOG_LEVEL_INFO=2
 QS_LOG_LEVEL_WARN=3
 QS_LOG_LEVEL_ERROR=4
-QS_LOG_LEVEL_NAMES=(TRACE DEBUG INFO WARN ERROR)
+QS_LOG_LEVELS=(TRACE DEBUG INFO WARN ERROR)
 
-QS_LOG_LEVEL=$QS_LOG_LEVEL_INFO
+QS_LOG_LEVEL_DEFAULT=$QS_LOG_LEVEL_INFO
 
 
 ### FIELDS
@@ -54,12 +54,12 @@ qs_curl() {
 }
 
 qs_log() {
-	local QS_LOG_STATEMENT_LEVEL=${2:-$QS_LOG_LEVEL_INFO}
+	local QS_LOG_STATEMENT_LEVEL=${2:-$QS_LOG_LEVEL_DEFAULT}
 
-	local QS_LOG_STATEMENT="${QS_LOG_LEVEL_NAMES[$QS_LOG_STATEMENT_LEVEL]}: $1"
+	local QS_LOG_STATEMENT="${QS_LOG_LEVELS[$QS_LOG_STATEMENT_LEVEL]}: $1"
 	echo -e "$QS_LOG_STATEMENT" >> ~/.querystrava/querystrava.log
 
-	if [[ $QS_LOG_STATEMENT_LEVEL -ge $QS_LOG_LEVEL ]]; then
+	if [[ $QS_LOG_STATEMENT_LEVEL -ge $QS_LOG_LEVEL_DEFAULT ]]; then
 		echo -e "$QS_LOG_STATEMENT" 1>&2
 	fi
 }
@@ -385,7 +385,7 @@ qs_build_segment_board_from_ids() {
 		local QS_SEGMENT_LEADERBOARD=$(qs_query_segment_leaderboard $segmentId)
 
 		local QS_SEGMENT_LEADERBOARD_ENTRIES=$(jq '.entries' <<< $QS_SEGMENT_LEADERBOARD)
-		[[ "null" == "$QS_SEGMENT_LEADERBOARD_ENTRIES" ]] && qs_log "Error retrieving segment ${segmentId} leaderboard" && continue
+		[[ "null" == "$QS_SEGMENT_LEADERBOARD_ENTRIES" ]] && qs_log "Error retrieving segment ${segmentId} leaderboard" $QS_LOG_LEVEL_ERROR && continue
 
 		local QS_SEGMENT_URL="https://www.strava.com/segments/${segmentId}"
 		local QS_SEGMENT_STAR=$([[ 'true' == `jq '.starred' <<< $QS_SEGMENT` ]] && echo ❤️)
