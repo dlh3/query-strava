@@ -4,6 +4,8 @@
 rm ~/.querystrava/querystrava.log &> /dev/null
 
 mkdir ~/.querystrava &> /dev/null
+mkdir ~/.querystrava/segments &> /dev/null
+
 touch ~/.querystrava/apiclient.sh
 touch ~/.querystrava/setauth.sh
 
@@ -165,6 +167,13 @@ qs_query_segment_leaderboard() {
 	qs_query_strava "/segments/${QS_SEGMENT_ID}/leaderboard?context_entries=0&per_page=5"
 }
 
+qs_query_segment_efforts() {
+	local QS_SEGMENT_ID=$1
+	local QS_QUERY_PAGE_SIZE=${2:-200} # default 200
+
+	qs_query_strava "/segments/${QS_SEGMENT_ID}/all_efforts?per_page=${QS_QUERY_PAGE_SIZE}"
+}
+
 qs_query_activity() {
 	local QS_ACTIVITY_ID=$1
 
@@ -233,8 +242,12 @@ qs_build_segment_board_from_ids() {
 
 		<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/gh/christianbach/tablesorter@07e0918254df3c2057d6d8e4653a0769f1881412/themes/blue/style.css\" />
 		<style>
-			span.nobreak {
+			.nobreak {
 				display: block;
+			}
+
+			.expandedSegmentInfo {
+				display: none;
 			}
 
 			table.tablesorter tbody tr.king.odd td {
@@ -267,6 +280,8 @@ qs_build_segment_board_from_ids() {
 		<script type=\"text/javascript\" src=\"https://cdn.jsdelivr.net/gh/christianbach/tablesorter@07e0918254df3c2057d6d8e4653a0769f1881412/jquery.metadata.js\"></script>
 
 		<script type=\"text/javascript\">
+			defaultTablesorterOpts = { widgets: ['zebra'], sortList: [[3,0]], debug: true };
+
 			function substringBeforeSpace(s) {
 				return s.replace(/ .*$/s, '');
 			}
@@ -328,11 +343,11 @@ qs_build_segment_board_from_ids() {
 				type: 'numeric'
 			});
 
-			\$(document).ready(() => \$('.tablesorter').tablesorter({ widgets: ['zebra'] }));
+			\$(document).ready(() => \$('.tablesorter#segmentBoard').tablesorter(defaultTablesorterOpts));
 		</script>
 
 		<script type=\"text/javascript\">
-			function toggleSegmentIframe(segmentId) {
+			function toggleSegmentIframe(segmentId, html) {
 				// disable auto-reload
 				toggleAutoReload(false);
 
@@ -344,8 +359,15 @@ qs_build_segment_board_from_ids() {
 				} else {
 					iframeRow = \$('<tr id=\"iframe-' + segmentId + '\">');
 					iframeRow.append(\$('<td onclick=\"toggleSegmentIframe(' + segmentId + ')\">X Close</td>'));
-					iframeRow.append(\$('<td colspan=\"99\"><iframe height=\"405\" width=\"800\" frameborder=\"0\" allowtransparency=\"true\" scrolling=\"no\" src=\"https://www.strava.com/segments/' + segmentId + '/embed\"></iframe></td>'));
+					iframeRow.append(\$(\`
+						<td colspan=\"99\">
+							\${html}
+							<h3>Global Leaderboard</h3>
+							<iframe class=\"nobreak\" height=\"405\" width=\"800\" frameborder=\"0\" allowtransparency=\"true\" scrolling=\"no\" src=\"https://www.strava.com/segments/\${segmentId}/embed\"></iframe>
+						</td>\`));
 
+					iframeRow.find('table').addClass('tablesorter');
+					iframeRow.find('table.tablesorter').tablesorter(defaultTablesorterOpts);
 					currentRow.after(iframeRow);
 				}
 			}
@@ -368,7 +390,7 @@ qs_build_segment_board_from_ids() {
 	   </head>
 	   <body>
 	    <a id=\"autoReloadToggle\" href=\"#\" onclick=\"toggleAutoReload(!autoReload); return false\">Toggle auto reload</a>
-		<table class=\"tablesorter { sortlist: [[3,0]] }\">
+		<table id=\"segmentBoard\" class=\"tablesorter\">
 		 <thead>
 		  <tr>
 		   <th>ID</th>
@@ -397,6 +419,7 @@ qs_build_segment_board_from_ids() {
 
 		local QS_SEGMENT=$(qs_query_segment $segmentId)
 		local QS_SEGMENT_LEADERBOARD=$(qs_query_segment_leaderboard $segmentId)
+		local QS_SEGMENT_EFFORTS_TABLE=$(qs_build_segment_efforts_board_from_id $segmentId)
 
 		local QS_SEGMENT_LEADERBOARD_ENTRIES=$(jq '.entries' <<< $QS_SEGMENT_LEADERBOARD)
 		[[ "$QS_SEGMENT_LEADERBOARD_ENTRIES" == "null" ]] && qs_log "Error retrieving segment ${segmentId} leaderboard" $QS_LOG_LEVEL_ERROR && continue
@@ -429,7 +452,10 @@ qs_build_segment_board_from_ids() {
 			  <tr id=\"${segmentId}\" class=\"$(qs_generate_segment_row_rank_class $QS_SEGMENT_ATHLETE_RANK)\">
 			   <td><a href=\"${QS_SEGMENT_URL}\">${segmentId}</a></td>
 			   <td>${QS_SEGMENT_STAR}</td>
-			   <td onclick=\"toggleSegmentIframe(${segmentId})\">$(jq -r '.name' <<< $QS_SEGMENT) ${QS_SEGMENT_CROWN}</td>
+			   <td onclick=\"toggleSegmentIframe(${segmentId}, \$(this).children('.expandedSegmentInfo').html())\">
+			    $(jq -r '.name' <<< $QS_SEGMENT) ${QS_SEGMENT_CROWN}
+			    <div class=\"expandedSegmentInfo\">${QS_SEGMENT_EFFORTS_TABLE}</div>
+			   </td>
 			   <td>${QS_SEGMENT_ATHLETE_RANK} / ${QS_SEGMENT_ENTRIES}</td>
 			   <td>$(printf "%.2f" ${QS_SEGMENT_ATHLETE_RANK_IMPRESSIVENESS})</td>
 			   <td>$(qs_seconds_to_timestamp $QS_SEGMENT_CR)</td>
@@ -473,6 +499,61 @@ qs_build_segment_board_from_ids() {
 	" >> ~/.querystrava/segments.html
 
 	open ~/.querystrava/segments.html
+}
+
+qs_build_segment_efforts_board_from_id() {
+	local QS_SEGMENT_ID=$1
+
+	# TODO: pass SEGMENT and SEGMENT_EFFORTS into this function
+
+	local QS_SEGMENT_EFFORTS=$(qs_query_segment_efforts $QS_SEGMENT_ID)
+	local QS_SEGMENT_EFFORTS_COUNT=$(jq '. | length' <<< $QS_SEGMENT_EFFORTS)
+	local QS_SEGMENT_NAME=$(jq -r '.[0].name' <<< $QS_SEGMENT_EFFORTS)
+
+	qs_log "Processing ${QS_SEGMENT_EFFORTS_COUNT} $(qs_pluralize $QS_SEGMENT_EFFORTS_COUNT effort) for segment ${QS_SEGMENT_ID} (${QS_SEGMENT_NAME})"
+
+	echo "
+		<h3>Personal efforts</h3>
+		<table id=\"efforts-${QS_SEGMENT_ID}\">
+		 <thead>
+		  <tr>
+		   <th>ID</th>
+		   <th>Activity (ID)</th>
+		   <th>Date</th>
+		   <th class=\"{ sorter: 'timestamp' }\">Time (MM:SS)</th>
+		   <th>CR Rank</th>
+		   <th>PR Rank</th>
+		 </thead>
+		 <tbody>
+	"
+
+	while read -r segmentEffortId; do
+		unset "${!QS_SEGMENT_EFFORT_@}"
+		[[ -z $segmentEffortId ]] && continue
+		qs_log "Processing segment effort ${segmentEffortId}"
+
+		local QS_SEGMENT_EFFORT_OBJECT=$(jq ". | map(select(.id == ${segmentEffortId})) | .[0]" <<< ${QS_SEGMENT_EFFORTS})
+
+		local QS_SEGMENT_EFFORT_ACTIVITY_ID=$(jq '.activity.id' <<< ${QS_SEGMENT_EFFORT_OBJECT})
+		local QS_SEGMENT_EFFORT_ACTIVITY_URL="https://www.strava.com/activities/${QS_SEGMENT_EFFORT_ACTIVITY_ID}"
+		local QS_SEGMENT_EFFORT_URL="${QS_SEGMENT_EFFORT_ACTIVITY_URL}/segments/${segmentEffortId}"
+
+		echo "
+			  <tr id=\"${segmentEffortId}\">
+			   <td><a href=\"${QS_SEGMENT_EFFORT_URL}\">${segmentEffortId}</a></td>
+			   <td><a href=\"${QS_SEGMENT_EFFORT_ACTIVITY_URL}\">${QS_SEGMENT_EFFORT_ACTIVITY_ID}</a></td>
+			   <td>$(jq -r '.start_date' <<< ${QS_SEGMENT_EFFORT_OBJECT})</td>
+			   <td>$(qs_seconds_to_timestamp $(jq '.elapsed_time' <<< ${QS_SEGMENT_EFFORT_OBJECT}))</td>
+			   <td>$(jq '.kom_rank' <<< ${QS_SEGMENT_EFFORT_OBJECT})</td>
+			   <td>$(jq '.pr_rank' <<< ${QS_SEGMENT_EFFORT_OBJECT})</td>
+			  </tr>
+		"
+	done <<< "$(jq '.[].id' <<< $QS_SEGMENT_EFFORTS)"
+
+	echo "
+		 </tbody>
+		</table>
+	"
 }
 
 qs_seconds_to_timestamp() {
