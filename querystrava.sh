@@ -287,7 +287,6 @@ qs_build_segment_board_from_ids() {
 
 		local QS_SEGMENT=$(qs_query_segment $segmentId)
 		local QS_SEGMENT_LEADERBOARD=$(qs_query_segment_leaderboard $segmentId)
-		local QS_SEGMENT_EFFORTS_TABLE=$(qs_build_segment_efforts_board_from_id $segmentId)
 
 		local QS_SEGMENT_LEADERBOARD_ENTRIES=$(jq '.entries' <<< $QS_SEGMENT_LEADERBOARD)
 		[[ "$QS_SEGMENT_LEADERBOARD_ENTRIES" == "null" ]] && qs_log "Error retrieving segment ${segmentId} leaderboard" $QS_LOG_LEVEL_ERROR && continue
@@ -317,12 +316,11 @@ qs_build_segment_board_from_ids() {
 		local QS_SEGMENT_CR_DELTA_PERCENTAGE=$[10000 * QS_SEGMENT_CR_DELTA / QS_SEGMENT_CR]
 
 		echo "
-			  <tr id=\"${segmentId}\" class=\"$(qs_generate_segment_row_rank_class $QS_SEGMENT_ATHLETE_RANK)\">
+			  <tr id=\"segmentRow-${segmentId}\" class=\"$(qs_generate_segment_row_rank_class $QS_SEGMENT_ATHLETE_RANK)\">
 			   <td><a href=\"${QS_SEGMENT_URL}\">${segmentId}</a></td>
 			   <td class=\"center\">${QS_SEGMENT_STAR}</td>
-			   <td onclick=\"toggleSegmentIframe(${segmentId}, \$(this).children('.expandedSegmentInfo').html())\">
+			   <td onclick=\"toggleSegmentIframe(${segmentId})\">
 			    $(jq -r '.name' <<< $QS_SEGMENT) ${QS_SEGMENT_CROWN}
-			    <div class=\"expandedSegmentInfo\">${QS_SEGMENT_EFFORTS_TABLE}</div>
 			   </td>
 			   <td>${QS_SEGMENT_ATHLETE_RANK} / ${QS_SEGMENT_ENTRIES}</td>
 			   <td>$(printf "%.2f" ${QS_SEGMENT_ATHLETE_RANK_IMPRESSIVENESS})</td>
@@ -335,6 +333,15 @@ qs_build_segment_board_from_ids() {
 			   <td>$(jq '.maximum_grade' <<< $QS_SEGMENT)</td>
 			   <td>$(jq '.elevation_low' <<< $QS_SEGMENT)</td>
 			   <td>$(jq '.elevation_high' <<< $QS_SEGMENT)</td>
+			  </tr>
+			  <tr id=\"expansionRow-${segmentId}\" class=\"segmentInfo collapsible hidden\">
+			   <td onclick=\"toggleSegmentIframe(${segmentId})\">X Close</td>
+			   <td colspan=\"99\">
+			    <h3>Personal efforts</h3>
+			    $(qs_build_segment_efforts_board_from_id $segmentId)
+			    <h3>Global Leaderboard</h3>
+			    <iframe id=\"segmentIframe-${segmentId}\" height=\"405\" width=\"800\" frameborder=\"0\" allowtransparency=\"true\" scrolling=\"no\" data-src=\"https://www.strava.com/segments/${segmentId}/embed\"></iframe>
+			   </td>
 			  </tr>
 		" >> ~/.querystrava/segments.html
 	done <<< "$(</dev/stdin)"
@@ -364,8 +371,7 @@ qs_build_segment_efforts_board_from_id() {
 	qs_log "Processing ${QS_SEGMENT_EFFORTS_COUNT} $(qs_pluralize $QS_SEGMENT_EFFORTS_COUNT effort) for segment ${QS_SEGMENT_ID} (${QS_SEGMENT_NAME})"
 
 	echo "
-		<h3>Personal efforts</h3>
-		<table id=\"efforts-${QS_SEGMENT_ID}\">
+		<table id=\"segmentEfforts-${QS_SEGMENT_ID}\" class=\"tablesorter\">
 		 <thead class=\"center\">
 		  <tr>
 		   <th>ID</th>
@@ -390,7 +396,7 @@ qs_build_segment_efforts_board_from_id() {
 		local QS_SEGMENT_EFFORT_URL="${QS_SEGMENT_EFFORT_ACTIVITY_URL}/segments/${segmentEffortId}"
 
 		echo "
-			  <tr id=\"${segmentEffortId}\">
+			  <tr id=\"segmentEffortRow-${segmentEffortId}\">
 			   <td><a href=\"${QS_SEGMENT_EFFORT_URL}\">${segmentEffortId}</a></td>
 			   <td><a href=\"${QS_SEGMENT_EFFORT_ACTIVITY_URL}\">${QS_SEGMENT_EFFORT_ACTIVITY_ID}</a></td>
 			   <td>$(jq -r '.start_date' <<< ${QS_SEGMENT_EFFORT_OBJECT})</td>
