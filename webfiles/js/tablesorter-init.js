@@ -4,7 +4,7 @@ var defaultTablesorterOpts =
 		widgets: ['zebra', 'stickyHeaders'],
 		sortList: [[3,0]]
 	};
-$(document).ready(() => $('.tablesorter').tablesorter(defaultTablesorterOpts));
+$(document).ready(() => $('.tablesorter#segmentBoard').tablesorter(defaultTablesorterOpts));
 
 
 function substringBeforeSpace(s) {

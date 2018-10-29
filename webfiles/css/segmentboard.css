@@ -2,6 +2,10 @@
 	display: block;
 }
 
+.expandedSegmentInfo {
+	display: none;
+}
+
 table.tablesorter tbody tr.king.odd td {
 	background-color: limegreen;
 }
