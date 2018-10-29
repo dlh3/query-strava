@@ -1,0 +1,27 @@
+.nobreak {
+	display: block;
+}
+
+table.tablesorter tbody tr.king.odd td {
+	background-color: limegreen;
+}
+
+table.tablesorter tbody tr.king.even td {
+	background-color: lightgreen;
+}
+
+table.tablesorter tbody tr.top5.odd td {
+	background-color: palegoldenrod;
+}
+
+table.tablesorter tbody tr.top5.even td {
+	background-color: lightgoldenrodyellow;
+}
+
+table.tablesorter tbody tr.top10.odd td {
+	background-color: lightblue;
+}
+
+table.tablesorter tbody tr.top10.even td {
+	background-color: paleturquoise;
+}
