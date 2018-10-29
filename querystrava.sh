@@ -259,7 +259,7 @@ qs_build_segment_board_from_ids() {
 	    <a id=\"autoReloadToggle\" href=\"#\" onclick=\"toggleAutoReload(!autoReload); return false\">Toggle auto reload</a>
 
 		<table id=\"segmentBoard\" class=\"tablesorter\">
-		 <thead>
+		 <thead class=\"center\">
 		  <tr>
 		   <th>ID</th>
 		   <th data-sorter=\"stringLength\">⭐</th>
@@ -319,7 +319,7 @@ qs_build_segment_board_from_ids() {
 		echo "
 			  <tr id=\"${segmentId}\" class=\"$(qs_generate_segment_row_rank_class $QS_SEGMENT_ATHLETE_RANK)\">
 			   <td><a href=\"${QS_SEGMENT_URL}\">${segmentId}</a></td>
-			   <td>${QS_SEGMENT_STAR}</td>
+			   <td class=\"center\">${QS_SEGMENT_STAR}</td>
 			   <td onclick=\"toggleSegmentIframe(${segmentId}, \$(this).children('.expandedSegmentInfo').html())\">
 			    $(jq -r '.name' <<< $QS_SEGMENT) ${QS_SEGMENT_CROWN}
 			    <div class=\"expandedSegmentInfo\">${QS_SEGMENT_EFFORTS_TABLE}</div>
@@ -366,7 +366,7 @@ qs_build_segment_efforts_board_from_id() {
 	echo "
 		<h3>Personal efforts</h3>
 		<table id=\"efforts-${QS_SEGMENT_ID}\">
-		 <thead>
+		 <thead class=\"center\">
 		  <tr>
 		   <th>ID</th>
 		   <th>Activity (ID)</th>
