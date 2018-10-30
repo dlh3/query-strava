@@ -123,9 +123,15 @@ QS_CLIENT_SECRET=$QS_CLIENT_SECRET
 qs_touch_auth() {
 	. ~/.querystrava/setauth.sh
 	if [[ -z "$QS_AUTH_TOKEN_EXPIRY" || `date +%s` > $[QS_AUTH_TOKEN_EXPIRY - 3600] ]]; then
-		qs_log "Refreshing auth token"
+		if [[ -z "$QS_AUTH_REFRESH_TOKEN" || "$QS_AUTH_REFRESH_TOKEN" == "null" ]]; then
+			qs_log "Refresh token is null, must authenticate..." $QS_LOG_LEVEL_WARN
 
-		qs_set_auth <<< "$(qs_curl POST "https://www.strava.com/oauth/token?client_id=${QS_CLIENT_ID}&client_secret=${QS_CLIENT_SECRET}&refresh_token=${QS_AUTH_REFRESH_TOKEN}&grant_type=refresh_token")"
+			qs_auth
+			. ~/.querystrava/setauth.sh
+		else
+			qs_log "Refreshing auth token"
+			qs_set_auth <<< "$(qs_curl POST "https://www.strava.com/oauth/token?client_id=${QS_CLIENT_ID}&client_secret=${QS_CLIENT_SECRET}&refresh_token=${QS_AUTH_REFRESH_TOKEN}&grant_type=refresh_token")"
+		fi
 	fi
 }
 
