@@ -1,10 +1,7 @@
-var defaultTablesorterOpts = 
-	{
-		theme: 'blue',
-		widgets: ['zebra', 'stickyHeaders'],
-		sortList: [[3,0]]
-	};
-$(document).ready(() => $('.tablesorter#segmentBoard').tablesorter(defaultTablesorterOpts));
+$.tablesorter.defaults.theme = 'blue';
+$.tablesorter.defaults.widgets = ['zebra', 'stickyHeaders'];
+
+$(document).ready(() => $('.tablesorter#segmentBoard').tablesorter({ sortList: [[3,0],[4,1]] }));
 
 
 function substringBeforeSpace(s) {
