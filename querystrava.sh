@@ -191,18 +191,18 @@ qs_query_activity() {
 qs_query_activity_ids() {
 	local QS_CURRENT_PAGE=1
 	local QS_RESULTS_PER_PAGE=30
-	local QS_PAGE_RESULTS_NUM=-1
+	local QS_PAGE_RESULTS_NUM=${QS_RESULTS_PER_PAGE}
 	local QS_ACTIVITY_IDS=()
 
 	qs_log "Retrieving activities for current user"
-	while [[ $QS_PAGE_RESULTS_NUM != 0 ]]; do
+	while [[ $QS_PAGE_RESULTS_NUM == $QS_RESULTS_PER_PAGE ]]; do
 		local QS_ACTIVITIES=$(qs_query_strava "/athlete/activities?per_page=${QS_RESULTS_PER_PAGE}&page=${QS_CURRENT_PAGE}")
-		QS_ACTIVITY_IDS+=($(jq '.[].id' <<< $QS_ACTIVITIES))
+		QS_ACTIVITY_IDS+=("$(jq '.[].id' <<< $QS_ACTIVITIES)")
 
 		QS_PAGE_RESULTS_NUM=$(jq 'length' <<< $QS_ACTIVITIES)
 		QS_CURRENT_PAGE=$[QS_CURRENT_PAGE + 1]
 	done
-	local QS_ACTIVITY_IDS_COUNT=$(tr ' ' '\n' <<< $QS_ACTIVITY_IDS[@] | wc -l | xargs)
+	local QS_ACTIVITY_IDS_COUNT=$(tr ' ' '\n' <<< "${QS_ACTIVITY_IDS[@]}" | wc -l | xargs)
 	qs_log "Collected $QS_ACTIVITY_IDS_COUNT $(qs_pluralize $QS_ACTIVITY_IDS_COUNT activity activities)"
 
 	echo "${QS_ACTIVITY_IDS[@]}"
