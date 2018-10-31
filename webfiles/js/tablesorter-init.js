@@ -1,13 +1,15 @@
 $.tablesorter.defaults.theme = 'blue';
-$.tablesorter.defaults.widgets = ['zebra', 'stickyHeaders'];
+$.tablesorter.defaults.widgets = ['zebra', 'filter', 'resizable', 'stickyHeaders'];
 
-$(document).ready(() => $('.tablesorter#segmentBoard').tablesorter({ sortList: [[3,0],[4,1]] }));
+$(document).ready(() => {
+	$('.tablesorter#segmentBoard').tablesorter({ sortList: [[3,0],[4,1]] });
+	$('.tablesorter').bind('filterEnd', () => $('.collapsible').removeClass('filtered'));
+});
 
 
 function substringBeforeSpace(s) {
 	return s.replace(/ .*$/s, '');
 }
-
 
 $.tablesorter.addParser({
 	// set a unique id
