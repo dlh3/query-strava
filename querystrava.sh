@@ -277,10 +277,10 @@ qs_build_segment_board_from_ids() {
 		   <th data-sorter=\"timestamp\">Delta<br />(MM:SS)</th>
 		   <th data-sorter=\"substringBeforeSpace\">Delta<br />(%)</th>
 		   <th>Distance<br />(m)</th>
-		   <th data-sorter=\"percent\">Average Grade<br />(%)</th>
-		   <th data-sorter=\"percent\">Maximum Grade<br />(%)</th>
-		   <th>Minimum Elevation<br />(m)</th>
-		   <th>Maximum Elevation<br />(m)</th>
+		   <th data-sorter=\"percent\">Average<br />Grade<br />(%)</th>
+		   <th data-sorter=\"percent\">Maximum<br />Grade<br />(%)</th>
+		   <th>Minimum<br />Elevation<br />(m)</th>
+		   <th>Maximum<br />Elevation<br />(m)</th>
 		 </thead>
 		 <tbody>
 	" >> ~/.querystrava/segments.html
