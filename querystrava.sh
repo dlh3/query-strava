@@ -255,6 +255,7 @@ qs_build_segment_board_from_ids() {
 		<script type=\"text/javascript\" src=\"./webfiles/js/vendor/jquery.tablesorter.widgets.js\"></script>
 
 		<script type=\"text/javascript\" src=\"./webfiles/js/tablesorter-init.js\"></script>
+		<script type=\"text/javascript\" src=\"./webfiles/js/tablesorter-parsers.js\"></script>
 		<script type=\"text/javascript\" src=\"./webfiles/js/segments-expansion.js\"></script>
 		<script type=\"text/javascript\" src=\"./webfiles/js/segments-favicon.js\"></script>
 		<script type=\"text/javascript\" src=\"./webfiles/js/autoreload.js\"></script>
