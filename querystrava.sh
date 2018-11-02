@@ -400,13 +400,16 @@ qs_build_segment_efforts_board_from_id() {
 		local QS_SEGMENT_EFFORT_ACTIVITY_URL="https://www.strava.com/activities/${QS_SEGMENT_EFFORT_ACTIVITY_ID}"
 		local QS_SEGMENT_EFFORT_URL="${QS_SEGMENT_EFFORT_ACTIVITY_URL}/segments/${segmentEffortId}"
 
+		local QS_SEGMENT_EFFORT_KOM=$(jq '.kom_rank' <<< $QS_SEGMENT_EFFORT_OBJECT)
+		local QS_SEGMENT_EFFORT_PR=$(jq '.pr_rank' <<< $QS_SEGMENT_EFFORT_OBJECT)
+
 		echo "
 			  <tr id=\"segmentEffortRow-${segmentEffortId}\">
 			   <td><a href=\"${QS_SEGMENT_EFFORT_URL}\">${segmentEffortId}</a></td>
 			   <td><a href=\"${QS_SEGMENT_EFFORT_ACTIVITY_URL}\">$(jq -r '.start_date' <<< ${QS_SEGMENT_EFFORT_OBJECT})</a></td>
 			   <td>$(qs_seconds_to_timestamp $(jq '.elapsed_time' <<< ${QS_SEGMENT_EFFORT_OBJECT}))</td>
-			   <td>$(jq '.kom_rank' <<< ${QS_SEGMENT_EFFORT_OBJECT})</td>
-			   <td>$(jq '.pr_rank' <<< ${QS_SEGMENT_EFFORT_OBJECT})</td>
+			   <td>$([[ "$QS_SEGMENT_EFFORT_KOM" != "null" ]] && echo $QS_SEGMENT_EFFORT_KOM)</td>
+			   <td>$([[ "$QS_SEGMENT_EFFORT_PR" != "null" ]] && echo $QS_SEGMENT_EFFORT_PR)</td>
 			  </tr>
 		"
 	done <<< "$(jq '.[].id' <<< $QS_SEGMENT_EFFORTS)"
