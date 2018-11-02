@@ -5,7 +5,6 @@ rm ~/.querystrava/querystrava.log &> /dev/null
 rm -r ~/.querystrava/webfiles &> /dev/null
 
 mkdir ~/.querystrava &> /dev/null
-mkdir ~/.querystrava/segments &> /dev/null
 
 touch ~/.querystrava/apiclient.sh
 touch ~/.querystrava/setauth.sh
