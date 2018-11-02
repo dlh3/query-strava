@@ -10,6 +10,6 @@ function toggleSegmentIframe(segmentId) {
 	currentRow.after(expansionRow);
 	expansionRow.toggleClass('hidden');
 
-	effortsTable.tablesorter({ sortList: [[3,0]] });
+	effortsTable.tablesorter();
 	segmentIframe.attr('src', segmentIframe.data('src'));
 }

@@ -264,7 +264,7 @@ qs_build_segment_board_from_ids() {
 	   <body>
 	    <a id=\"autoReloadToggle\" href=\"#\" onclick=\"toggleAutoReload(!autoReload); return false\">Toggle auto reload</a>
 
-		<table id=\"segmentBoard\" class=\"tablesorter\">
+		<table id=\"segmentBoard\" class=\"tablesorter\" data-sortList=\"[[3,0],[4,1]]\">
 		 <thead class=\"center\">
 		  <tr>
 		   <th>ID</th>
@@ -377,7 +377,7 @@ qs_build_segment_efforts_board_from_id() {
 	qs_log "Processing ${QS_SEGMENT_EFFORTS_COUNT} $(qs_pluralize $QS_SEGMENT_EFFORTS_COUNT effort) for segment ${QS_SEGMENT_ID} (${QS_SEGMENT_NAME})"
 
 	echo "
-		<table id=\"segmentEfforts-${QS_SEGMENT_ID}\" class=\"tablesorter\">
+		<table id=\"segmentEfforts-${QS_SEGMENT_ID}\" class=\"tablesorter\" data-sortList=\"[[3,0]]\">
 		 <thead class=\"center\">
 		  <tr>
 		   <th>ID</th>

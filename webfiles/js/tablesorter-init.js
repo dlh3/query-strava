@@ -2,7 +2,7 @@ $.tablesorter.defaults.theme = 'blue';
 $.tablesorter.defaults.widgets = ['zebra', 'filter', 'resizable', 'stickyHeaders'];
 
 $(document).ready(() => {
-	$('.tablesorter#segmentBoard').tablesorter({ sortList: [[3,0],[4,1]] });
+	$('.tablesorter#segmentBoard').tablesorter();
 
 	// Collapsible rows should never be filtered out
 	$('.tablesorter').bind('filterEnd', () => $('.collapsible').removeClass('filtered'));
