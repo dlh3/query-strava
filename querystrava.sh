@@ -377,11 +377,10 @@ qs_build_segment_efforts_board_from_id() {
 	qs_log "Processing ${QS_SEGMENT_EFFORTS_COUNT} $(qs_pluralize $QS_SEGMENT_EFFORTS_COUNT effort) for segment ${QS_SEGMENT_ID} (${QS_SEGMENT_NAME})"
 
 	echo "
-		<table id=\"segmentEfforts-${QS_SEGMENT_ID}\" class=\"tablesorter\" data-sortList=\"[[3,0]]\">
+		<table id=\"segmentEfforts-${QS_SEGMENT_ID}\" class=\"tablesorter\" data-sortList=\"[[2,0]]\">
 		 <thead class=\"center\">
 		  <tr>
 		   <th>ID</th>
-		   <th>Activity (ID)</th>
 		   <th>Date</th>
 		   <th data-sorter=\"timestamp\">Time (MM:SS)</th>
 		   <th>CR Rank</th>
@@ -404,8 +403,7 @@ qs_build_segment_efforts_board_from_id() {
 		echo "
 			  <tr id=\"segmentEffortRow-${segmentEffortId}\">
 			   <td><a href=\"${QS_SEGMENT_EFFORT_URL}\">${segmentEffortId}</a></td>
-			   <td><a href=\"${QS_SEGMENT_EFFORT_ACTIVITY_URL}\">${QS_SEGMENT_EFFORT_ACTIVITY_ID}</a></td>
-			   <td>$(jq -r '.start_date' <<< ${QS_SEGMENT_EFFORT_OBJECT})</td>
+			   <td><a href=\"${QS_SEGMENT_EFFORT_ACTIVITY_URL}\">$(jq -r '.start_date' <<< ${QS_SEGMENT_EFFORT_OBJECT})</a></td>
 			   <td>$(qs_seconds_to_timestamp $(jq '.elapsed_time' <<< ${QS_SEGMENT_EFFORT_OBJECT}))</td>
 			   <td>$(jq '.kom_rank' <<< ${QS_SEGMENT_EFFORT_OBJECT})</td>
 			   <td>$(jq '.pr_rank' <<< ${QS_SEGMENT_EFFORT_OBJECT})</td>
