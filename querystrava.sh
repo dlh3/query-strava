@@ -377,7 +377,7 @@ qs_build_segment_efforts_board_from_id() {
 	qs_log "Processing ${QS_SEGMENT_EFFORTS_COUNT} $(qs_pluralize $QS_SEGMENT_EFFORTS_COUNT effort) for segment ${QS_SEGMENT_ID} (${QS_SEGMENT_NAME})"
 
 	echo "
-		<table id=\"segmentEfforts-${QS_SEGMENT_ID}\" class=\"tablesorter\" data-sortList=\"[[2,0]]\">
+		<table id=\"segmentEfforts-${QS_SEGMENT_ID}\" class=\"tablesorter\" data-sortList=\"[[1,1]]\">
 		 <thead class=\"center\">
 		  <tr>
 		   <th>ID</th>
