@@ -382,9 +382,12 @@ qs_build_segment_efforts_board_from_id() {
 		  <tr>
 		   <th>ID</th>
 		   <th>Date</th>
-		   <th data-sorter=\"timestamp\">Time (MM:SS)</th>
+		   <th data-sorter=\"timestamp\">Time<br />(MM:SS)</th>
 		   <th>CR Rank</th>
 		   <th>PR Rank</th>
+		   <th>Average Cadence<br />(SPM)</th>
+		   <th>Average HR<br />(BPM)</th>
+		   <th>Max HR<br />(BPM)</th>
 		 </thead>
 		 <tbody>
 	"
@@ -401,16 +404,22 @@ qs_build_segment_efforts_board_from_id() {
 		local QS_SEGMENT_EFFORT_URL="${QS_SEGMENT_EFFORT_ACTIVITY_URL}/segments/${segmentEffortId}"
 
 		local QS_SEGMENT_EFFORT_DATE=$(date -j -u -f '%Y-%m-%dT%H:%M:%SZ' "$(jq -r '.start_date' <<< $QS_SEGMENT_EFFORT_OBJECT)" +%s)
-		local QS_SEGMENT_EFFORT_KOM=$(jq '.kom_rank' <<< $QS_SEGMENT_EFFORT_OBJECT)
+		local QS_SEGMENT_EFFORT_CR=$(jq '.kom_rank' <<< $QS_SEGMENT_EFFORT_OBJECT)
 		local QS_SEGMENT_EFFORT_PR=$(jq '.pr_rank' <<< $QS_SEGMENT_EFFORT_OBJECT)
+		local QS_SEGMENT_EFFORT_AVERAGE_CADENCE=$(jq '.average_cadence' <<< $QS_SEGMENT_EFFORT_OBJECT)
+		local QS_SEGMENT_EFFORT_AVERAGE_HR=$(jq '.average_heartrate' <<< $QS_SEGMENT_EFFORT_OBJECT)
+		local QS_SEGMENT_EFFORT_MAX_HR=$(jq '.max_heartrate' <<< $QS_SEGMENT_EFFORT_OBJECT)
 
 		echo "
 			  <tr id=\"segmentEffortRow-${segmentEffortId}\">
 			   <td><a href=\"${QS_SEGMENT_EFFORT_URL}\">${segmentEffortId}</a></td>
 			   <td><a href=\"${QS_SEGMENT_EFFORT_ACTIVITY_URL}\" class=\"isoDate\">${QS_SEGMENT_EFFORT_DATE}</a></td>
 			   <td>$(qs_seconds_to_timestamp $(jq '.elapsed_time' <<< $QS_SEGMENT_EFFORT_OBJECT))</td>
-			   <td>$([[ "$QS_SEGMENT_EFFORT_KOM" != "null" ]] && echo $QS_SEGMENT_EFFORT_KOM)</td>
+			   <td>$([[ "$QS_SEGMENT_EFFORT_CR" != "null" ]] && echo $QS_SEGMENT_EFFORT_CR)</td>
 			   <td>$([[ "$QS_SEGMENT_EFFORT_PR" != "null" ]] && echo $QS_SEGMENT_EFFORT_PR)</td>
+			   <td>$([[ "$QS_SEGMENT_EFFORT_AVERAGE_CADENCE" != "null" ]] && bc <<< "${QS_SEGMENT_EFFORT_AVERAGE_CADENCE} * 2")</td>
+			   <td>$([[ "$QS_SEGMENT_EFFORT_AVERAGE_HR" != "null" ]] && echo $QS_SEGMENT_EFFORT_AVERAGE_HR)</td>
+			   <td>$([[ "$QS_SEGMENT_EFFORT_MAX_HR" != "null" ]] && echo $QS_SEGMENT_EFFORT_MAX_HR)</td>
 			  </tr>
 		"
 	done <<< "$(jq '.[].id' <<< $QS_SEGMENT_EFFORTS)"
