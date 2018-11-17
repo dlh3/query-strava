@@ -74,7 +74,7 @@ Contributions are more than welcome.
 
 ## License
 
-TBD
+[MIT License](https://github.com/dlh3/query-strava/blob/master/LICENSE)
 
 ## Acknowledgments
 
