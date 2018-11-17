@@ -10,26 +10,26 @@
 	display: none;
 }
 
-table.tablesorter tbody tr.king.odd td {
+table.tablesorter tbody tr.king.odd:not(:hover) td {
 	background-color: limegreen;
 }
 
-table.tablesorter tbody tr.king.even td {
+table.tablesorter tbody tr.king.even:not(:hover) td {
 	background-color: lightgreen;
 }
 
-table.tablesorter tbody tr.top5.odd td {
+table.tablesorter tbody tr.top5.odd:not(:hover) td {
 	background-color: palegoldenrod;
 }
 
-table.tablesorter tbody tr.top5.even td {
+table.tablesorter tbody tr.top5.even:not(:hover) td {
 	background-color: lightgoldenrodyellow;
 }
 
-table.tablesorter tbody tr.top10.odd td {
+table.tablesorter tbody tr.top10.odd:not(:hover) td {
 	background-color: lightblue;
 }
 
-table.tablesorter tbody tr.top10.even td {
+table.tablesorter tbody tr.top10.even:not(:hover) td {
 	background-color: paleturquoise;
 }
